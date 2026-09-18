@@ -15,6 +15,10 @@ def import_excel(file_path, state: AppState):
             path,
             sheet_name=None,
             engine="openpyxl",
+            dtype={
+                TableHeader.POSITION_CODE.value: str,
+                TableHeader.TAX_ID.value: str,
+            },
         )
 
         sheet_name, df = next(iter(sheets.items()))

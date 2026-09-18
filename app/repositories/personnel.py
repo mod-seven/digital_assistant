@@ -14,7 +14,10 @@ class ExcelPersonalRepository(ABC):
     def get_number_on_the_list(self) -> int: ...
 
     @abstractmethod
-    def get_subordination_by_full_name(self, full_name: str) -> dict: ...
+    def get_subordination_by_position_code(self, position_code: str) -> list: ...
+
+    @abstractmethod
+    def get_colomans_position(self, count: int) -> list: ...
 
 
 class PandasExcelPersonnelRepository(ExcelPersonalRepository):
@@ -27,18 +30,29 @@ class PandasExcelPersonnelRepository(ExcelPersonalRepository):
     def get_number_on_the_list(self) -> int:
         return self.df[TableHeader.FULL_NAME].nunique()
 
-    def get_subordination_by_full_name(self, full_name: str) -> dict:
-        rows = self.df[self.df[TableHeader.FULL_NAME] == full_name]
+    def get_colomans_position(self, count: int) -> list:
+        unit_index = self.df.columns.get_loc(TableHeader.UNIT.value)
+        return self.df.columns[unit_index : unit_index + count]
+
+    def get_person_by_tax_id(self, tax_id: str) -> dict:
+        rows = self.df[self.df[TableHeader.TAX_ID] == tax_id]
 
         if rows.empty:
             raise ExcelPersonalRepositoryExclusion(
-                f"Не знайдено запису з ПІБ: {full_name}"
+                f"Не знайдено запису з РНОКПП (ІПН): {tax_id}"
+            )
+        return rows.iloc[0].to_dict()
+
+    def get_subordination_by_position_code(self, position_code: str) -> dict:
+        rows = self.df[self.df[TableHeader.POSITION_CODE] == position_code]
+
+        if rows.empty:
+            raise ExcelPersonalRepositoryExclusion(
+                f"Не знайдено запису з кодом посади: {position_code}"
             )
         row = rows.iloc[0]
 
-        unit_index = self.df.columns.get_loc(TableHeader.UNIT)
-
-        subordination_columns = self.df.columns[unit_index : unit_index + 3]
+        subordination_columns = self.get_colomans_position(3)
 
         subordination = [
             row[column] for column in subordination_columns if pd.notna(row[column])
@@ -59,17 +73,12 @@ class PandasExcelPersonnelRepository(ExcelPersonalRepository):
                     if (
                         pd.notna(unit)
                         and unit not in heads
-                        and full_name != head_row[TableHeader.FULL_NAME]
+                        and position_code != head_row[TableHeader.POSITION_CODE]
                     ):
                         heads[unit] = {
                             TableHeader.FULL_NAME.value: head_row[
                                 TableHeader.FULL_NAME
                             ],
-                            TableHeader.ROW_NUMBER.value: head_row[
-                                TableHeader.ROW_NUMBER
-                            ],
-                            TableHeader.POSITION_CODE.value: head_row[
-                                TableHeader.POSITION_CODE
-                            ],
+                            "row": head_row,
                         }
         return heads
