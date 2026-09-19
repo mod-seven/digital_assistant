@@ -56,9 +56,11 @@ class ReportGeneration:
                 next_row is not None
                 and next_row[TableHeader.FULL_JOB_TITLE_DATIVE.value]
             ):
-                next_comander_position = next_row[
-                    TableHeader.FULL_JOB_TITLE_DATIVE.value
-                ].capitalize()
+                next_comander_position = (
+                    next_row[TableHeader.FULL_JOB_TITLE_DATIVE.value].capitalize()
+                    + " "
+                    + f"військової частини {MILITARY_UNIT_NUMBER}"
+                )
 
             result.append(
                 {
@@ -69,7 +71,9 @@ class ReportGeneration:
                     "full_job_title": self._get_full_job_title(current_row),
                     "current_position": current_row[
                         TableHeader.FULL_JOB_TITLE_DATIVE.value
-                    ].capitalize(),
+                    ].capitalize()
+                    + " "
+                    + f"військової частини {MILITARY_UNIT_NUMBER}",
                     "next_comander_position": next_comander_position,
                 }
             )
@@ -77,13 +81,19 @@ class ReportGeneration:
         return result
 
     def _get_full_job_title(self, row: pd.Series) -> str:
+
+        full_job_title = ""
         if (
             row[TableHeader.RELEVANCE_TO_THE_POSITION.value]
             == RelevanceToThePosition.TVO.value
         ):
-            return TVO_TEXT + " " + row[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value]
+            full_job_title = (
+                TVO_TEXT + " " + row[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value]
+            )
         else:
-            return row[TableHeader.FULL_JOB_TITLE.value]
+            full_job_title = row[TableHeader.FULL_JOB_TITLE.value]
+
+        return full_job_title + " " + f"військової частини {MILITARY_UNIT_NUMBER}"
 
     def generate_report_over_position(self, tax_id: str) -> list:
         doc = DocxTemplate("C:/Users/chewbaka/Desktop/test_position.docx")
@@ -93,15 +103,17 @@ class ReportGeneration:
             position_code=person[TableHeader.POSITION_CODE.value]
         )
         position = (
-            person[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value] + " " + MILITARY_UNIT
+            person[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value]
+            + " "
+            + f"військової частини {MILITARY_UNIT_NUMBER}"
         )
 
         context = {
             "full_name": self.get_name_and_surname(person[TableHeader.FULL_NAME.value]),
             "rank": person[TableHeader.RANK.value],
-            "full_job_title": "",
-            "position": position.upper(),
+            "full_job_title": " ",
             "date": date.today().strftime("%d.%m.%Y"),
+            "text": f"Дійсним доповідаю, що справи та посаду {position.upper()} здав.",
             "subordination": subordination,
         }
 
