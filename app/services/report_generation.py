@@ -18,6 +18,7 @@ from app.repositories.personnel import ExcelPersonalRepository
 class ReportGeneration:
     def __init__(self, repository: ExcelPersonalRepository):
         self.repository = repository
+        self.comander_position_dative = f"Командиру {MILITARY_UNIT}"
 
     def generate_report(self, full_name: str) -> dict:
         subordination = self.repository.get_subordination_by_full_name(full_name)
@@ -47,7 +48,7 @@ class ReportGeneration:
         for item in over_list_subordination:
             current_row = item["current"]
             next_row = item["next"]
-            next_comander_position = f"Командиру {MILITARY_UNIT}"
+            next_comander_position = self.comander_position_dative
 
             if current_row[TableHeader.STATUS.value] != StatusPersonal.IN_STOCK.value:
                 continue
@@ -102,6 +103,10 @@ class ReportGeneration:
         subordination = self.get_text_subordination(
             position_code=person[TableHeader.POSITION_CODE.value]
         )
+        next_comander_position = self.comander_position_dative
+        if subordination:
+            next_comander_position = subordination[0].get("next_comander_position")
+
         position = (
             person[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value]
             + " "
@@ -113,6 +118,7 @@ class ReportGeneration:
             "rank": person[TableHeader.RANK.value],
             "full_job_title": " ",
             "date": date.today().strftime("%d.%m.%Y"),
+            "next_comander_position": next_comander_position,
             "text": f"Дійсним доповідаю, що справи та посаду {position.upper()} здав.",
             "subordination": subordination,
         }
