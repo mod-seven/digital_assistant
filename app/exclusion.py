@@ -9,3 +9,7 @@ class ImportExcelExclusion(BaseExclusion):
 
 class ExcelPersonalRepositoryExclusion(BaseExclusion):
     pass
+
+
+class ReportGenerationExclusion(BaseExclusion):
+    pass

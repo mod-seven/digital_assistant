@@ -1,8 +1,27 @@
+from dataclasses import asdict, dataclass
 from datetime import date
 from pydoc import doc
 
 import pandas as pd
+from docx import Document
+from docxcompose.composer import Composer
 from docxtpl import DocxTemplate
+
+from app.exclusion import ReportGenerationExclusion
+
+
+@dataclass
+class Context:
+    full_name: str
+    rank: str
+    full_job_title: str
+    date: str
+    next_comander_position: str
+    text: str
+    subordination: list
+
+
+from io import BytesIO
 
 from app.constants import (
     MILITARY_UNIT,
@@ -19,9 +38,8 @@ class ReportGeneration:
     def __init__(self, repository: ExcelPersonalRepository):
         self.repository = repository
         self.comander_position_dative = f"Командиру {MILITARY_UNIT}"
-
-    def generate_report(self, full_name: str) -> dict:
-        subordination = self.repository.get_subordination_by_full_name(full_name)
+        self.path_template_report = "C:/Users/chewbaka/Desktop/test_position.docx"
+        self.path_save_report = "C:/Users/chewbaka/Desktop/result.docx"
 
     def get_name_and_surname(self, full_name: str) -> str:
         name_parts = full_name.split(" ")
@@ -29,7 +47,7 @@ class ReportGeneration:
 
     def get_text_subordination(self, position_code: str) -> str:
         subordination = self.repository.get_subordination_by_position_code(
-            position_code
+            position_code=position_code
         )
 
         result = []
@@ -96,32 +114,68 @@ class ReportGeneration:
 
         return full_job_title + " " + f"військової частини {MILITARY_UNIT_NUMBER}"
 
-    def generate_report_over_position(self, tax_id: str) -> list:
-        doc = DocxTemplate("C:/Users/chewbaka/Desktop/test_position.docx")
-
-        person = self.repository.get_person_by_tax_id(tax_id)
+    def _get_context(self, person) -> Context:
         subordination = self.get_text_subordination(
             position_code=person[TableHeader.POSITION_CODE.value]
         )
         next_comander_position = self.comander_position_dative
         if subordination:
-            next_comander_position = subordination[0].get("next_comander_position")
+            next_comander_position = subordination[0].get("current_position")
 
+        return Context(
+            full_name=self.get_name_and_surname(person[TableHeader.FULL_NAME.value]),
+            rank=person[TableHeader.RANK.value],
+            full_job_title=" ",
+            date=date.today().strftime("%d.%m.%Y"),
+            next_comander_position=next_comander_position,
+            text="",
+            subordination=subordination,
+        )
+
+    def _generate_document(self, context: Context) -> DocxTemplate:
+        doc = DocxTemplate(self.path_template_report)
+        doc.render(asdict(context))
+        return doc
+
+    def generate_reports(self, contexts: list[Context]) -> None:
+        documents = []
+
+        for context in contexts:
+            doc = self._generate_document(context)
+
+            buffer = BytesIO()
+            doc.save(buffer)
+            buffer.seek(0)
+
+            documents.append(buffer)
+
+        if not documents:
+            raise ReportGenerationExclusion(
+                "Рапорт не був згенерований, данні для генерації відсутні!!!"
+            )
+
+        master = Document(documents[0])
+        composer = Composer(master)
+
+        for buffer in documents[1:]:
+            master.add_page_break()
+
+            composer.append(Document(buffer))
+
+        composer.save(self.path_save_report)
+
+        for buffer in documents:
+            buffer.close()
+
+    def get_context_report_over_position(self, tax_id: str):
+        person = self.repository.get_person_by_tax_id(tax_id)
+        context = self._get_context(person=person)
         position = (
             person[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value]
             + " "
             + f"військової частини {MILITARY_UNIT_NUMBER}"
         )
-
-        context = {
-            "full_name": self.get_name_and_surname(person[TableHeader.FULL_NAME.value]),
-            "rank": person[TableHeader.RANK.value],
-            "full_job_title": " ",
-            "date": date.today().strftime("%d.%m.%Y"),
-            "next_comander_position": next_comander_position,
-            "text": f"Дійсним доповідаю, що справи та посаду {position.upper()} здав.",
-            "subordination": subordination,
-        }
-
-        doc.render(context)
-        doc.save("C:/Users/chewbaka/Desktop/result.docx")
+        context.text = (
+            f"Дійсним доповідаю, що справи та посаду {position.upper()} здав."
+        )
+        return context
