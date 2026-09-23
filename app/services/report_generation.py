@@ -5,7 +5,7 @@ from pydoc import doc
 import pandas as pd
 from docx import Document
 from docxcompose.composer import Composer
-from docxtpl import DocxTemplate
+from docxtpl import DocxTemplate, RichText
 
 from app.exclusion import ReportGenerationExclusion
 from app.utils import format_date_ukrainian
@@ -195,11 +195,25 @@ class ReportGeneration:
     ) -> Context:
         person = self.repository.get_person_by_tax_id(tax_id)
         context = self._get_context(person=person, position_code=position_code)
+        row = self.repository.get_row_by_position_code(position_code=position_code)
 
         order = f"{order_name} від {format_date_ukrainian(oder_date)} №{oder_number}"
-        position = ""
+        position = (
+            row[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value]
+            + " "
+            + f"військової частини {MILITARY_UNIT_NUMBER}"
+        )
         data_accepted = format_date_ukrainian(date.today())
-        text = f"Доповідаю, що відповідно до наказу {order} призначений на посаду {position}.\n Справи та посаду {position}, з {data_accepted} прийняв та приступив до виконання обов’язків за посадою"
+
+        rt = RichText()
+        rt.add(
+            f"Доповідаю, що відповідно до наказу {order} призначений на посаду {position.upper()}."
+        )
+        rt.add("\n\t")
+        rt.add(
+            f"Справи та посаду {position.upper()}, з {data_accepted} прийняв та приступив до виконання обов’язків за посадою."
+        )
+
         context.full_job_title = ""
-        context.text = text
+        context.text = rt
         return context

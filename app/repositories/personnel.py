@@ -19,6 +19,9 @@ class ExcelPersonalRepository(ABC):
     @abstractmethod
     def get_colomans_position(self, count: int) -> list: ...
 
+    @abstractmethod
+    def get_row_by_position_code(self, position_code: str) -> dict: ...
+
 
 class PandasExcelPersonnelRepository(ExcelPersonalRepository):
     def __init__(self, df: pd.DataFrame):
@@ -40,6 +43,15 @@ class PandasExcelPersonnelRepository(ExcelPersonalRepository):
         if rows.empty:
             raise ExcelPersonalRepositoryExclusion(
                 f"Не знайдено запису з РНОКПП (ІПН): {tax_id}"
+            )
+        return rows.iloc[0].to_dict()
+
+    def get_row_by_position_code(self, position_code: str) -> dict:
+        rows = self.df[self.df[TableHeader.POSITION_CODE] == position_code]
+
+        if rows.empty:
+            raise ExcelPersonalRepositoryExclusion(
+                f"Не знайдено запису з кодом посади: {position_code}"
             )
         return rows.iloc[0].to_dict()
 
