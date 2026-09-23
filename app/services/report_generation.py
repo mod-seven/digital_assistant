@@ -8,6 +8,7 @@ from docxcompose.composer import Composer
 from docxtpl import DocxTemplate, RichText
 
 from app.exclusion import ReportGenerationExclusion
+from app.settings import TEMPLATE_REPORT_PATH
 from app.utils import format_date_ukrainian
 
 
@@ -39,7 +40,7 @@ class ReportGeneration:
     def __init__(self, repository: ExcelPersonalRepository):
         self.repository = repository
         self.comander_position_dative = f"Командиру {MILITARY_UNIT}"
-        self.path_template_report = "C:/Users/chewbaka/Desktop/test_position.docx"
+        self.path_template_report = TEMPLATE_REPORT_PATH
         self.path_save_report = "C:/Users/chewbaka/Desktop/result.docx"
 
     def get_name_and_surname(self, full_name: str) -> str:
