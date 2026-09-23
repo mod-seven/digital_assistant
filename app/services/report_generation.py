@@ -8,6 +8,7 @@ from docxcompose.composer import Composer
 from docxtpl import DocxTemplate
 
 from app.exclusion import ReportGenerationExclusion
+from app.utils import format_date_ukrainian
 
 
 @dataclass
@@ -114,10 +115,11 @@ class ReportGeneration:
 
         return full_job_title + " " + f"військової частини {MILITARY_UNIT_NUMBER}"
 
-    def _get_context(self, person) -> Context:
-        subordination = self.get_text_subordination(
-            position_code=person[TableHeader.POSITION_CODE.value]
+    def _get_context(self, person, position_code: str | None = None) -> Context:
+        position_code = (
+            position_code if position_code else person[TableHeader.POSITION_CODE.value]
         )
+        subordination = self.get_text_subordination(position_code=position_code)
         next_comander_position = self.comander_position_dative
         if subordination:
             next_comander_position = subordination[0].get("current_position")
@@ -125,7 +127,7 @@ class ReportGeneration:
         return Context(
             full_name=self.get_name_and_surname(person[TableHeader.FULL_NAME.value]),
             rank=person[TableHeader.RANK.value],
-            full_job_title=" ",
+            full_job_title=self._get_full_job_title(person),
             date=date.today().strftime("%d.%m.%Y"),
             next_comander_position=next_comander_position,
             text="",
@@ -167,15 +169,37 @@ class ReportGeneration:
         for buffer in documents:
             buffer.close()
 
-    def get_context_report_over_position(self, tax_id: str):
+    def get_context_report_over_position(self, tax_id: str) -> Context:
         person = self.repository.get_person_by_tax_id(tax_id)
         context = self._get_context(person=person)
+
         position = (
             person[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value]
             + " "
             + f"військової частини {MILITARY_UNIT_NUMBER}"
         )
+        context.full_job_title = " "
         context.text = (
             f"Дійсним доповідаю, що справи та посаду {position.upper()} здав."
         )
+
+        return context
+
+    def get_context_report_accepted_position(
+        self,
+        position_code: str,
+        tax_id: str,
+        order_name: str,
+        oder_number: str,
+        oder_date: date,
+    ) -> Context:
+        person = self.repository.get_person_by_tax_id(tax_id)
+        context = self._get_context(person=person, position_code=position_code)
+
+        order = f"{order_name} від {format_date_ukrainian(oder_date)} №{oder_number}"
+        position = ""
+        data_accepted = format_date_ukrainian(date.today())
+        text = f"Доповідаю, що відповідно до наказу {order} призначений на посаду {position}.\n Справи та посаду {position}, з {data_accepted} прийняв та приступив до виконання обов’язків за посадою"
+        context.full_job_title = ""
+        context.text = text
         return context

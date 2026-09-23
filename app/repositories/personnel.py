@@ -58,27 +58,27 @@ class PandasExcelPersonnelRepository(ExcelPersonalRepository):
             row[column] for column in subordination_columns if pd.notna(row[column])
         ]
 
+        filtered_df = self.df[self.df[subordination_columns[0]] == subordination[0]]
+
         heads = {}
 
         for column in subordination_columns:
-            first_rows = self.df[self.df[column].notna()].drop_duplicates(
+            first_rows = filtered_df[filtered_df[column].notna()].drop_duplicates(
                 column, keep="first"
             )
 
             for _, head_row in first_rows.iterrows():
                 unit = head_row[column]
 
-                if unit in subordination:
+                if (
+                    pd.notna(unit)
+                    and unit in subordination
+                    and unit not in heads
+                    and position_code != head_row[TableHeader.POSITION_CODE]
+                ):
+                    heads[unit] = {
+                        TableHeader.FULL_NAME.value: head_row[TableHeader.FULL_NAME],
+                        "row": head_row,
+                    }
 
-                    if (
-                        pd.notna(unit)
-                        and unit not in heads
-                        and position_code != head_row[TableHeader.POSITION_CODE]
-                    ):
-                        heads[unit] = {
-                            TableHeader.FULL_NAME.value: head_row[
-                                TableHeader.FULL_NAME
-                            ],
-                            "row": head_row,
-                        }
         return heads
