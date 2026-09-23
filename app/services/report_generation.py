@@ -115,7 +115,12 @@ class ReportGeneration:
 
         return full_job_title + " " + f"військової частини {MILITARY_UNIT_NUMBER}"
 
-    def _get_context(self, person, position_code: str | None = None) -> Context:
+    def _get_context(
+        self,
+        person,
+        date,
+        position_code: str | None = None,
+    ) -> Context:
         position_code = (
             position_code if position_code else person[TableHeader.POSITION_CODE.value]
         )
@@ -128,7 +133,7 @@ class ReportGeneration:
             full_name=self.get_name_and_surname(person[TableHeader.FULL_NAME.value]),
             rank=person[TableHeader.RANK.value],
             full_job_title=self._get_full_job_title(person),
-            date=date.today().strftime("%d.%m.%Y"),
+            date=date,
             next_comander_position=next_comander_position,
             text="",
             subordination=subordination,
@@ -169,9 +174,13 @@ class ReportGeneration:
         for buffer in documents:
             buffer.close()
 
-    def get_context_report_over_position(self, tax_id: str) -> Context:
+    def get_context_report_over_position(
+        self,
+        tax_id: str,
+        date_raport: str = date.today().strftime("%d.%m.%Y"),
+    ) -> Context:
         person = self.repository.get_person_by_tax_id(tax_id)
-        context = self._get_context(person=person)
+        context = self._get_context(person=person, date=date_raport)
 
         position = (
             person[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value]
@@ -192,9 +201,14 @@ class ReportGeneration:
         order_name: str,
         oder_number: str,
         oder_date: date,
+        date_raport: str = date.today().strftime("%d.%m.%Y"),
     ) -> Context:
         person = self.repository.get_person_by_tax_id(tax_id)
-        context = self._get_context(person=person, position_code=position_code)
+        context = self._get_context(
+            person=person,
+            position_code=position_code,
+            date=date_raport,
+        )
         row = self.repository.get_row_by_position_code(position_code=position_code)
 
         order = f"{order_name} від {format_date_ukrainian(oder_date)} №{oder_number}"
