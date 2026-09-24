@@ -15,7 +15,6 @@ from app.styles import (
     CARD_RADIUS,
     CONTENT_PADDING,
     PRIMARY,
-    PRIMARY_DARK,
     SUCCESS,
     TEXT,
     TEXT_SECONDARY,
@@ -65,35 +64,14 @@ class HomeView:
             self.state,
         )
 
-        self.show_selected_file(file_path)
+        self.page.controls.clear()
+        self.page.add(self.build())
+        self.page.update()
 
-    # ---------------------------------------------------------
-    # Показ вибраного файлу
-    # ---------------------------------------------------------
-
-    def show_selected_file(self, file_path):
-
-        file_name = Path(file_path).name
-
-        self.file_name_text.value = file_name
-        self.file_status.value = "Excel успішно імпортовано"
-
-        self.file_status.color = SUCCESS
-
-        self.import_button.content = ft.Row(
-            controls=[
-                ft.Icon(
-                    ft.Icons.CHECK,
-                    color=WHITE,
-                ),
-                ft.Text(
-                    "Excel імпортовано",
-                    color=WHITE,
-                    weight=ft.FontWeight.BOLD,
-                ),
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-        )
+    def update_statistics(self):
+        self.staff_value.value = self.state.number_of_staff_positions
+        self.list_value.value = self.state.number_on_the_list
+        self.rows_value.value = self.state.number_row
 
         self.page.update()
 
@@ -278,24 +256,19 @@ class HomeView:
                                 spacing=15,
                                 controls=[
                                     self.statistic_card(
-                                        ft.Icons.PEOPLE_OUTLINE,
-                                        "Працівники",
-                                        "—",
-                                    ),
-                                    self.statistic_card(
-                                        ft.Icons.WORK_OUTLINE,
-                                        "Посади",
-                                        "—",
-                                    ),
-                                    self.statistic_card(
                                         ft.Icons.ACCOUNT_TREE_OUTLINED,
-                                        "Підрозділи",
-                                        "—",
+                                        "Штат",
+                                        str(self.state.number_of_staff_positions),
                                     ),
                                     self.statistic_card(
-                                        ft.Icons.TABLE_VIEW,
+                                        ft.Icons.PEOPLE_OUTLINE,
+                                        "Список",
+                                        str(self.state.number_on_the_list),
+                                    ),
+                                    self.statistic_card(
+                                        ft.Icons.TABLE_ROWS_OUTLINED,
                                         "Рядки Excel",
-                                        "—",
+                                        str(self.state.number_row),
                                     ),
                                 ],
                             ),
