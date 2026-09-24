@@ -161,93 +161,68 @@ class HomeView:
 
     def import_card(self):
 
+        imported = self.state.imported
+
         self.file_name_text = ft.Text(
-            "Файл ще не вибрано",
-            size=13,
-            color=TEXT_SECONDARY,
+            self.state.file_name if imported else "Файл ще не вибрано",
+            size=15,
+            weight=ft.FontWeight.BOLD if imported else None,
+            color=TEXT if imported else TEXT_SECONDARY,
         )
 
         self.file_status = ft.Text(
-            "Очікується імпорт",
-            size=12,
-            color=TEXT_SECONDARY,
+            (
+                "Excel успішно імпортовано"
+                if imported
+                else "Оберіть Excel файл для початку роботи"
+            ),
+            size=13,
+            color=SUCCESS if imported else TEXT_SECONDARY,
         )
 
         self.import_button = ft.Button(
             content=ft.Row(
                 controls=[
                     ft.Icon(
-                        ft.Icons.FOLDER_OPEN,
+                        ft.Icons.CHECK if imported else ft.Icons.UPLOAD_FILE,
                         color=WHITE,
                     ),
                     ft.Text(
-                        "Вибрати Excel",
+                        "Excel імпортовано" if imported else "Вибрати Excel",
                         color=WHITE,
                         weight=ft.FontWeight.BOLD,
                     ),
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
-            width=190,
-            height=46,
-            bgcolor=PRIMARY,
+            bgcolor=SUCCESS if imported else PRIMARY,
+            color=WHITE,
             on_click=self.select_excel,
         )
 
         return ft.Container(
-            bgcolor=WHITE,
-            border_radius=CARD_RADIUS,
-            border=ft.Border.all(
-                1,
-                BORDER,
-            ),
-            padding=40,
             content=ft.Column(
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=18,
                 controls=[
-                    # Іконка Excel
-                    ft.Container(
-                        width=70,
-                        height=70,
-                        bgcolor="#E8F5E9",
-                        border_radius=16,
-                        alignment=ft.Alignment(
-                            x=0,
-                            y=0,
-                        ),
-                        content=ft.Icon(
-                            ft.Icons.TABLE_CHART,
-                            size=36,
-                            color="#16A34A",
-                        ),
-                    ),
                     ft.Text(
-                        "Імпортувати Excel",
-                        size=24,
+                        "Імпорт Excel",
+                        size=20,
                         weight=ft.FontWeight.BOLD,
                         color=TEXT,
                     ),
                     ft.Text(
-                        "Виберіть Excel-файл, з яким будете "
-                        "працювати у цьому сеансі.",
+                        "Завантажте файл зі штатною структурою",
                         size=14,
                         color=TEXT_SECONDARY,
-                        text_align=ft.TextAlign.CENTER,
-                    ),
-                    ft.Container(
-                        height=5,
                     ),
                     self.file_name_text,
                     self.file_status,
                     self.import_button,
-                    ft.Text(
-                        "Підтримуються файли .xlsx та .xls",
-                        size=11,
-                        color="#9CA3AF",
-                    ),
                 ],
+                spacing=10,
             ),
+            padding=20,
+            bgcolor=WHITE,
+            border_radius=CARD_RADIUS,
         )
 
     # ---------------------------------------------------------
