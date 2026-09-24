@@ -4,10 +4,12 @@ import pandas as pd
 
 from app.constants import TableHeader
 from app.exclusion import ImportExcelExclusion
+from app.repositories.personnel import PandasExcelPersonnelRepository
 from app.state import AppState
 
 
 def import_excel(file_path, state: AppState):
+
     try:
         path = Path(file_path)
 
@@ -29,7 +31,8 @@ def import_excel(file_path, state: AppState):
 
         if missing_headers:
             raise ImportExcelExclusion(
-                f"Відсутні обов'язкові заголовки у файлі {path.name}: "
+                f"Відсутні обов'язкові заголовки у файлі "
+                f"{path.name}: "
                 f"{', '.join(missing_headers)}"
             )
 
@@ -37,7 +40,10 @@ def import_excel(file_path, state: AppState):
         state.file_name = path.name
         state.sheets = sheets
         state.df = df
+
+        state.personnel_repository = PandasExcelPersonnelRepository(df)
+
         state.imported = True
 
     except Exception as error:
-        raise ImportExcelExclusion(f"Помилка імпорту: {error}")
+        raise ImportExcelExclusion(f"Помилка імпорту: {error}") from error
