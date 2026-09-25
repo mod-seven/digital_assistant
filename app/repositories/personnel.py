@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 
-from app.constants import TableHeader
+from app.constants import RelevanceToThePosition, TableHeader
 from app.exclusion import ExcelPersonalRepositoryExclusion
 
 
@@ -38,7 +38,13 @@ class PandasExcelPersonnelRepository(ExcelPersonalRepository):
         return self.df.columns[unit_index : unit_index + count]
 
     def get_person_by_tax_id(self, tax_id: str) -> dict:
-        rows = self.df[self.df[TableHeader.TAX_ID] == tax_id]
+        rows = self.df[
+            (self.df[TableHeader.TAX_ID] == tax_id)
+            & (
+                self.df[TableHeader.RELEVANCE_TO_THE_POSITION]
+                == RelevanceToThePosition.STATE
+            )
+        ]
 
         if rows.empty:
             raise ExcelPersonalRepositoryExclusion(

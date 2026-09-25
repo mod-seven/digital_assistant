@@ -96,34 +96,9 @@ class Sidebar:
                         ft.Icons.HOME_OUTLINED,
                     ),
                     self.menu_button(
-                        "Працівники",
-                        "/employees",
-                        ft.Icons.PEOPLE_OUTLINE,
-                    ),
-                    self.menu_button(
-                        "Посади",
-                        "/positions",
-                        ft.Icons.WORK_OUTLINE,
-                    ),
-                    self.menu_button(
-                        "Підрозділи",
-                        "/departments",
-                        ft.Icons.ACCOUNT_TREE_OUTLINED,
-                    ),
-                    self.menu_button(
-                        "Дані",
-                        "/data",
-                        ft.Icons.TABLE_VIEW,
-                    ),
-                    self.menu_button(
-                        "Звіти",
+                        "Рапорт",
                         "/reports",
                         ft.Icons.DESCRIPTION_OUTLINED,
-                    ),
-                    self.menu_button(
-                        "Експорт",
-                        "/export",
-                        ft.Icons.UPLOAD_OUTLINED,
                     ),
                     # Заповнюємо простір
                     ft.Container(

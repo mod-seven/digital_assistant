@@ -2,13 +2,7 @@ import flet as ft
 
 from app.state import AppState
 from app.views.home import HomeView
-
-# from app.views.employees import EmployeesView
-# from app.views.positions import PositionsView
-# from app.views.departments import DepartmentsView
-# from app.views.data import DataView
-# from app.views.reports import ReportsView
-# from app.views.export import ExportView
+from app.views.reports import ReportsView
 
 
 class AppRouter:
@@ -45,23 +39,11 @@ class AppRouter:
                 self.state,
             )
 
-        # elif route == "/employees":
-        #     view = EmployeesView(self.page)
-
-        # elif route == "/positions":
-        #     view = PositionsView(self.page)
-
-        # elif route == "/departments":
-        #     view = DepartmentsView(self.page)
-
-        # elif route == "/data":
-        #     view = DataView(self.page)
-
-        # elif route == "/reports":
-        #     view = ReportsView(self.page)
-
-        # elif route == "/export":
-        #     view = ExportView(self.page)
+        elif route == "/reports":
+            view = ReportsView(
+                self.page,
+                self.state,
+            )
 
         else:
             view = HomeView(

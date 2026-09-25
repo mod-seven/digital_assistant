@@ -37,11 +37,11 @@ from app.repositories.personnel import ExcelPersonalRepository
 
 
 class ReportGeneration:
-    def __init__(self, repository: ExcelPersonalRepository):
+    def __init__(self, repository: ExcelPersonalRepository, path_save_report: str):
         self.repository = repository
         self.comander_position_dative = f"Командиру {MILITARY_UNIT}"
         self.path_template_report = TEMPLATE_REPORT_PATH
-        self.path_save_report = "C:/Users/chewbaka/Desktop/result.docx"
+        self.path_save_report = path_save_report
 
     def get_name_and_surname(self, full_name: str) -> str:
         name_parts = full_name.split(" ")
