@@ -3,6 +3,7 @@ from datetime import datetime
 import flet as ft
 
 from app.components.sidebar import Sidebar
+from app.constants import TableHeader
 from app.services.report_generation import ReportGeneration
 from app.state import AppState
 from app.styles import (
@@ -38,14 +39,10 @@ class ReportsView:
                     key="report_over_position",
                     text="Рапорт посаду здав",
                 ),
-                # ft.DropdownOption(
-                #     key="business_trip",
-                #     text="Рапорт на відрядження",
-                # ),
-                # ft.DropdownOption(
-                #     key="treatment",
-                #     text="Рапорт на лікування",
-                # ),
+                ft.DropdownOption(
+                    key="report_accepted_position",
+                    text="Рапорт посаду прийняв",
+                ),
             ],
             on_select=self.report_type_changed,
         )
@@ -101,16 +98,11 @@ class ReportsView:
 
         self.report_type = e.control.value
 
-        print(self.report_type)
-
         if self.report_type == "report_over_position":
             self.form_container.content = self.report_over_position_form()
 
-        elif self.report_type == "business_trip":
-            self.form_container.content = self.business_trip_form()
-
-        elif self.report_type == "treatment":
-            self.form_container.content = self.treatment_form()
+        elif self.report_type == "report_accepted_position":
+            self.form_container.content = self.report_accepted_position_form()
 
         self.page.update()
 
@@ -149,46 +141,97 @@ class ReportsView:
     # ЗАГАЛЬНІ ПОЛЯ
     # ---------------------------------------------------------
 
+    def tax_id_changed(self, e):
+        search = e.control.value.strip().lower()
+
+        self.person_suggestions.controls.clear()
+
+        if not search:
+            self.person_suggestions.visible = False
+            self.person_suggestions.update()
+            return
+
+        df = self.state.df
+
+        if df is None or df.empty:
+            self.person_suggestions.visible = False
+            self.person_suggestions.update()
+            return
+
+        full_name = df[TableHeader.FULL_NAME].fillna("").astype(str)
+
+        tax_id = df[TableHeader.TAX_ID].fillna("").astype(str)
+
+        rows = (
+            df[
+                full_name.str.lower().str.contains(search, na=False)
+                | tax_id.str.lower().str.contains(search, na=False)
+            ]
+            .drop_duplicates(subset=[TableHeader.TAX_ID])
+            .head(20)
+        )
+
+        for _, row in rows.iterrows():
+
+            name = str(row[TableHeader.FULL_NAME])
+            person_tax_id = str(row[TableHeader.TAX_ID])
+
+            self.person_suggestions.controls.append(
+                ft.ListTile(
+                    title=ft.Text(name),
+                    subtitle=ft.Text(f"РНОКПП: {person_tax_id}"),
+                    on_click=lambda e, tax_id=person_tax_id, name=name: self.person_selected(
+                        tax_id, name
+                    ),
+                )
+            )
+
+        self.person_suggestions.visible = len(rows) > 0
+        self.person_suggestions.update()
+
+    def person_selected(self, tax_id, name):
+
+        self.selected_tax_id = tax_id
+        self.tax_id.value = name
+
+        self.person_suggestions.controls.clear()
+        self.person_suggestions.visible = False
+        self.person_suggestions.update()
+
+        self.page.update()
+
     def person_fields(self):
 
-        self.tax_id = ft.TextField(
-            label="РНОКПП",
-            hint_text="Введіть РНОКПП",
+        self.selected_tax_id = None
+
+        self.tax_id = ft.AutoComplete(
+            value="",
+            suggestions=[],
+            suggestions_max_height=300,
+            on_change=self.tax_id_changed,
             expand=True,
         )
 
-        self.full_name = ft.TextField(
-            label="ПІБ",
-            hint_text="Буде заповнено автоматично",
-            read_only=True,
-            expand=True,
-        )
-
-        self.position = ft.TextField(
-            label="Посада",
-            hint_text="Буде заповнено автоматично",
-            read_only=True,
-            expand=True,
+        self.person_suggestions = ft.ListView(
+            spacing=0,
+            height=200,
+            visible=False,
         )
 
         return [
-            ft.Row(
+            ft.Column(
                 controls=[
-                    self.tax_id,
-                    ft.Button(
-                        "Знайти",
-                        icon=ft.Icons.SEARCH,
-                        on_click=self.find_person,
+                    ft.Row(
+                        controls=[
+                            ft.Text("Військовослужбовець"),
+                            self.tax_id,
+                        ],
+                        spacing=10,
                     ),
+                    self.person_suggestions,
                 ],
-                spacing=10,
-            ),
-            ft.Row(
-                controls=[
-                    self.full_name,
-                    self.position,
-                ],
-                spacing=15,
+                spacing=0,
+                expand=True,
             ),
         ]
 
@@ -217,89 +260,63 @@ class ReportsView:
             ],
         )
 
-    # ---------------------------------------------------------
-    # ВІДРЯДЖЕННЯ
-    # ---------------------------------------------------------
-
-    def business_trip_form(self):
-
-        self.destination = ft.TextField(
-            label="Місце відрядження",
-            hint_text="Населений пункт / підрозділ",
-        )
-
-        self.trip_date_from = ft.TextField(
-            label="Дата початку",
-            hint_text="ДД.ММ.РРРР",
+    def report_accepted_position_form(self):
+        self.position_code = ft.TextField(
+            label="Код посади (Імпульс)",
+            hint_text="00000000",
             expand=True,
         )
 
-        self.trip_date_to = ft.TextField(
-            label="Дата закінчення",
-            hint_text="ДД.ММ.РРРР",
+        self.order_name = ft.TextField(
+            label="Наказ по особовому складу",
+            hint_text="Командира військової частини А7379",
             expand=True,
         )
 
-        self.trip_reason = ft.TextField(
-            label="Мета відрядження",
-            multiline=True,
-            min_lines=3,
-            max_lines=5,
+        self.oder_number = ft.TextField(
+            label="Номер наказу по особовому складу",
+            hint_text="№",
+            expand=True,
+        )
+
+        self.oder_date = ft.TextField(
+            label="Дата наказу по особовому складу",
+            hint_text="ДД.ММ.РРРР",
+            value=datetime.now().strftime("%d.%m.%Y"),
+            expand=True,
+        )
+
+        self.date_report = ft.TextField(
+            label="Дата рапорту",
+            hint_text="ДД.ММ.РРРР",
+            value=datetime.now().strftime("%d.%m.%Y"),
+            expand=True,
         )
 
         return self.form_card(
-            title="Рапорт на відрядження",
+            title="Рапорт посаду прийняв",
             controls=[
                 *self.person_fields(),
-                ft.Divider(
-                    color=BORDER,
-                ),
-                self.destination,
                 ft.Row(
                     controls=[
-                        self.trip_date_from,
-                        self.trip_date_to,
+                        self.position_code,
                     ],
-                    spacing=15,
                 ),
-                self.trip_reason,
-                self.action_buttons(),
-            ],
-        )
-
-    # ---------------------------------------------------------
-    # ЛІКУВАННЯ
-    # ---------------------------------------------------------
-
-    def treatment_form(self):
-
-        self.medical_institution = ft.TextField(
-            label="Медичний заклад",
-            hint_text="Назва медичного закладу",
-        )
-
-        self.treatment_date = ft.TextField(
-            label="Дата",
-            hint_text="ДД.ММ.РРРР",
-        )
-
-        self.treatment_reason = ft.TextField(
-            label="Підстава",
-            multiline=True,
-            min_lines=3,
-            max_lines=5,
-        )
-
-        return self.form_card(
-            title="Рапорт на лікування",
-            controls=[
-                *self.person_fields(),
                 ft.Divider(
                     color=BORDER,
                 ),
-                self.medical_institution,
-                self.treatment_date,
-                self.treatment_reason,
+                ft.Row(
+                    controls=[
+                        self.order_name,
+                        self.oder_number,
+                        self.oder_date,
+                    ],
+                ),
+                ft.Row(
+                    controls=[
+                        self.date_report,
+                    ],
+                ),
                 self.action_buttons(),
             ],
         )
@@ -355,37 +372,6 @@ class ReportsView:
         )
 
     # ---------------------------------------------------------
-    # ПОШУК ВІЙСЬКОВОСЛУЖБОВЦЯ
-    # ---------------------------------------------------------
-
-    def find_person(self, e):
-
-        tax_id = self.tax_id.value.strip()
-
-        if not tax_id:
-            return
-
-        repository = self.state.personnel_repository
-
-        if not repository:
-            self.show_message("Спочатку завантажте Excel файл.")
-            return
-
-        try:
-
-            person = repository.get_person_by_tax_id(tax_id)
-
-            self.full_name.value = str(person.get("ПІБ", ""))
-
-            self.position.value = str(person.get("Посада", ""))
-
-            self.page.update()
-
-        except Exception as error:
-
-            self.show_message(str(error))
-
-    # ---------------------------------------------------------
     # ОЧИСТИТИ
     # ---------------------------------------------------------
 
@@ -409,7 +395,7 @@ class ReportsView:
 
         file_path = await file_picker.save_file(
             dialog_title="Зберегти рапорт",
-            file_name="Рапорт.docx",
+            file_name=f"{self.report_type_dropdown.text}_{self.tax_id.value}.docx",
             file_type=ft.FilePickerFileType.CUSTOM,
             allowed_extensions=["docx"],
         )
@@ -423,9 +409,23 @@ class ReportsView:
                 path_save_report=file_path,
             )
 
-            context = report_generation.get_context_report_over_position(
-                tax_id=self.tax_id.value.strip()
-            )
+            if self.report_type == "report_over_position":
+                context = report_generation.get_context_report_over_position(
+                    tax_id=self.selected_tax_id,
+                    date_raport=self.date_report.value,
+                )
+
+            elif self.report_type == "report_accepted_position":
+                context = report_generation.get_context_report_accepted_position(
+                    position_code=self.position_code.value,
+                    order_name=self.order_name.value,
+                    oder_number=self.oder_number.value,
+                    oder_date=datetime.strptime(
+                        self.oder_date.value.strip(), "%d.%m.%Y"
+                    ),
+                    tax_id=self.selected_tax_id,
+                    date_raport=self.date_report.value,
+                )
 
             report_generation.generate_reports(contexts=[context])
 

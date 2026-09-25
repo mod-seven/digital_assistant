@@ -32,3 +32,6 @@ class RelevanceToThePosition(str, Enum):
 TVO_TEXT = "ТВО"
 MILITARY_UNIT_NUMBER = "А7379"
 MILITARY_UNIT = f"військова частина {MILITARY_UNIT_NUMBER}"
+
+WORD_FONT = "Times New Roman"
+WORD_SIZE = 24

@@ -29,6 +29,8 @@ from app.constants import (
     MILITARY_UNIT,
     MILITARY_UNIT_NUMBER,
     TVO_TEXT,
+    WORD_FONT,
+    WORD_SIZE,
     RelevanceToThePosition,
     StatusPersonal,
     TableHeader,
@@ -188,10 +190,16 @@ class ReportGeneration:
             + " "
             + f"військової частини {MILITARY_UNIT_NUMBER}"
         )
-        context.full_job_title = " "
-        context.text = (
-            f"Дійсним доповідаю, що справи та посаду {position.upper()} здав."
+
+        rt = RichText()
+        rt.add(
+            f"Дійсним доповідаю, що справи та посаду {position.upper()} здав.",
+            font=WORD_FONT,
+            size=WORD_SIZE,
         )
+
+        context.full_job_title = " "
+        context.text = rt
 
         return context
 
@@ -222,11 +230,15 @@ class ReportGeneration:
 
         rt = RichText()
         rt.add(
-            f"Доповідаю, що відповідно до наказу {order} призначений на посаду {position.upper()}."
+            f"Доповідаю, що відповідно до наказу {order} призначений на посаду {position.upper()}.",
+            font=WORD_FONT,
+            size=WORD_SIZE,
         )
         rt.add("\n\t")
         rt.add(
-            f"Справи та посаду {position.upper()}, з {data_accepted} прийняв та приступив до виконання обов’язків за посадою."
+            f"Справи та посаду {position.upper()}, з {data_accepted} прийняв та приступив до виконання обов’язків за посадою.",
+            font=WORD_FONT,
+            size=WORD_SIZE,
         )
 
         context.full_job_title = ""
