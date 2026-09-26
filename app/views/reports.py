@@ -1,9 +1,11 @@
 from datetime import datetime
+from pathlib import Path
 
 import flet as ft
 
 from app.components.sidebar import Sidebar
-from app.constants import TableHeader
+from app.constants import ReportType, TableHeader
+from app.services.report_file import ReportFile
 from app.services.report_generation import ReportGeneration
 from app.state import AppState
 from app.styles import (
@@ -12,6 +14,7 @@ from app.styles import (
     CARD_RADIUS,
     CONTENT_PADDING,
     PRIMARY,
+    SUCCESS,
     TEXT,
     TEXT_SECONDARY,
     WHITE,
@@ -25,9 +28,11 @@ class ReportsView:
         self.state = state
 
         self.report_type = None
+        self.tax_id = None
 
         self.report_type_dropdown = None
         self.form_container = None
+        self.report_file_data = None
 
     def build(self):
 
@@ -36,12 +41,16 @@ class ReportsView:
             hint_text="Оберіть тип рапорту",
             options=[
                 ft.DropdownOption(
-                    key="report_over_position",
-                    text="Рапорт посаду здав",
+                    key=ReportType.REPORT_OVER_POSITION.name,
+                    text=ReportType.REPORT_OVER_POSITION.value,
                 ),
                 ft.DropdownOption(
-                    key="report_accepted_position",
-                    text="Рапорт посаду прийняв",
+                    key=ReportType.REPORT_ACCEPTED_POSITION.name,
+                    text=ReportType.REPORT_ACCEPTED_POSITION.value,
+                ),
+                ft.DropdownOption(
+                    key=ReportType.REPOSTS_FFROM_FILE.name,
+                    text=ReportType.REPOSTS_FFROM_FILE.value,
                 ),
             ],
             on_select=self.report_type_changed,
@@ -98,11 +107,14 @@ class ReportsView:
 
         self.report_type = e.control.value
 
-        if self.report_type == "report_over_position":
+        if self.report_type == ReportType.REPORT_OVER_POSITION.name:
             self.form_container.content = self.report_over_position_form()
 
-        elif self.report_type == "report_accepted_position":
+        elif self.report_type == ReportType.REPORT_ACCEPTED_POSITION.name:
             self.form_container.content = self.report_accepted_position_form()
+
+        elif self.report_type == ReportType.REPOSTS_FFROM_FILE.name:
+            self.form_container.content = self.reports_from_file_form()
 
         self.page.update()
 
@@ -282,7 +294,6 @@ class ReportsView:
         self.oder_date = ft.TextField(
             label="Дата наказу по особовому складу",
             hint_text="ДД.ММ.РРРР",
-            value=datetime.now().strftime("%d.%m.%Y"),
             expand=True,
         )
 
@@ -395,7 +406,7 @@ class ReportsView:
 
         file_path = await file_picker.save_file(
             dialog_title="Зберегти рапорт",
-            file_name=f"{self.report_type_dropdown.text}_{self.tax_id.value}.docx",
+            file_name=f"{self.report_type_dropdown.text}_{self.tax_id.value if self.tax_id else ''}.docx",
             file_type=ft.FilePickerFileType.CUSTOM,
             allowed_extensions=["docx"],
         )
@@ -404,18 +415,20 @@ class ReportsView:
             return
 
         try:
+            contexts = []
             report_generation = ReportGeneration(
                 repository=self.state.personnel_repository,
                 path_save_report=file_path,
             )
 
-            if self.report_type == "report_over_position":
+            if self.report_type == ReportType.REPORT_OVER_POSITION.name:
                 context = report_generation.get_context_report_over_position(
                     tax_id=self.selected_tax_id,
                     date_raport=self.date_report.value,
                 )
+                contexts.append(context)
 
-            elif self.report_type == "report_accepted_position":
+            elif self.report_type == ReportType.REPORT_ACCEPTED_POSITION.name:
                 context = report_generation.get_context_report_accepted_position(
                     position_code=self.position_code.value,
                     order_name=self.order_name.value,
@@ -426,8 +439,14 @@ class ReportsView:
                     tax_id=self.selected_tax_id,
                     date_raport=self.date_report.value,
                 )
+                contexts.append(context)
 
-            report_generation.generate_reports(contexts=[context])
+            elif self.report_type == ReportType.REPOSTS_FFROM_FILE.name:
+                contexts = report_generation.get_contexts(
+                    file_data=self.report_file_data
+                )
+
+            report_generation.generate_reports(contexts=contexts)
 
             self.show_message(f"Рапорт збережено:\n{file_path}")
 
@@ -446,3 +465,134 @@ class ReportsView:
         )
 
         self.page.show_dialog(dialog)
+
+    def reports_from_file_form(self):
+
+        self.report_excel_file = None
+        self.report_excel_name = ft.Text(
+            "Файл з даними для рапртів не вибраний",
+            color=TEXT_SECONDARY,
+        )
+
+        self.report_excel_status = ft.Text(
+            "Завантажте Excel з параметрами для рапортів",
+            color=TEXT_SECONDARY,
+        )
+
+        self.report_excel_button = ft.Button(
+            "Завантажити Excel",
+            icon=ft.Icons.UPLOAD_FILE,
+            on_click=self.select_report_excel,
+        )
+
+        self.report_download_excel_button = ft.Button(
+            "Імпорт шаблон Excel",
+            icon=ft.Icons.FILE_DOWNLOAD_OUTLINED,
+            on_click=self.select_report_download_excel,
+        )
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        "Рапорти",
+                        size=22,
+                        weight=ft.FontWeight.BOLD,
+                        color=TEXT,
+                    ),
+                    ft.Divider(color=BORDER),
+                    ft.Text(
+                        "Параметри рапортів",
+                        size=18,
+                        weight=ft.FontWeight.BOLD,
+                        color=TEXT,
+                    ),
+                    ft.Container(
+                        content=ft.Column(
+                            controls=[
+                                ft.Icon(
+                                    ft.Icons.TABLE_VIEW_OUTLINED,
+                                    size=45,
+                                    color=PRIMARY,
+                                ),
+                                ft.Text(
+                                    "Excel-файл з даними для рапортів",
+                                    size=16,
+                                    weight=ft.FontWeight.BOLD,
+                                ),
+                                self.report_excel_name,
+                                self.report_excel_status,
+                                self.report_excel_button,
+                                self.report_download_excel_button,
+                            ],
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            spacing=10,
+                        ),
+                        padding=30,
+                        bgcolor=WHITE,
+                        border_radius=CARD_RADIUS,
+                        border=ft.Border.all(
+                            1,
+                            BORDER,
+                        ),
+                    ),
+                    self.action_buttons(),
+                ],
+                spacing=20,
+            ),
+            padding=25,
+            bgcolor=WHITE,
+            border_radius=CARD_RADIUS,
+            expand=True,
+        )
+
+    def select_report_excel(self, e):
+
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+
+        file_path = filedialog.askopenfilename(
+            title="Виберіть Excel з параметрами рапортів",
+            filetypes=[
+                ("Excel files", "*.xlsx"),
+            ],
+        )
+
+        root.destroy()
+
+        if not file_path:
+            return
+
+        self.report_excel_file = file_path
+
+        self.report_excel_name.value = Path(file_path).name
+
+        self.report_excel_status.value = "Excel успішно завантажено"
+
+        self.report_excel_status.color = SUCCESS
+
+        report_file = ReportFile()
+        self.report_file_data = report_file.load_excel(filename=file_path)
+
+        self.page.update()
+
+    async def select_report_download_excel(self, e):
+        file_picker = ft.FilePicker()
+
+        file_path = await file_picker.save_file(
+            dialog_title="Зберегти шаблон",
+            file_name=f"Шаблон_генерації_рапортів.xlsx",
+            file_type=ft.FilePickerFileType.CUSTOM,
+            allowed_extensions=["xlsx"],
+        )
+
+        if not file_path:
+            return
+
+        report_file = ReportFile()
+        report_file.create_excel_template(filename=file_path)
+
+        self.show_message(f"Рапорт збережено:\n{file_path}")

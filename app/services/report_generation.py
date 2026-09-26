@@ -32,6 +32,7 @@ from app.constants import (
     WORD_FONT,
     WORD_SIZE,
     RelevanceToThePosition,
+    ReportType,
     StatusPersonal,
     TableHeader,
 )
@@ -244,3 +245,15 @@ class ReportGeneration:
         context.full_job_title = ""
         context.text = rt
         return context
+
+    def get_contexts(self, file_data: dict) -> list[Context]:
+        contexts = []
+        for method, items in file_data.items():
+            for item in items:
+                if ReportType.REPORT_OVER_POSITION.name == method:
+                    context = self.get_context_report_over_position(**item)
+                elif ReportType.REPORT_ACCEPTED_POSITION.name == method:
+                    context = self.get_context_report_accepted_position(**item)
+                contexts.append(context)
+
+        return contexts

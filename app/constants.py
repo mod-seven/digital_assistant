@@ -35,3 +35,9 @@ MILITARY_UNIT = f"військова частина {MILITARY_UNIT_NUMBER}"
 
 WORD_FONT = "Times New Roman"
 WORD_SIZE = 24
+
+
+class ReportType(str, Enum):
+    REPORT_OVER_POSITION = "Рапорт посаду здав"
+    REPORT_ACCEPTED_POSITION = "Рапорт посаду прийняв"
+    REPOSTS_FFROM_FILE = "Генерація рапортів з файлу"
