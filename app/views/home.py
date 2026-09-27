@@ -216,7 +216,7 @@ class HomeView:
                 # ---------------------------------------------
                 # Ліва панель
                 # ---------------------------------------------
-                Sidebar(self.page).build(),
+                Sidebar(self.page, self.state).build(),
                 ft.VerticalDivider(
                     width=1,
                     color=BORDER,

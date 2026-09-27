@@ -88,7 +88,7 @@ class ReportsView:
 
         return ft.Row(
             controls=[
-                Sidebar(self.page).build(),
+                Sidebar(self.page, self.state).build(),
                 ft.Container(
                     content=content,
                     expand=True,

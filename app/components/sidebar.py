@@ -1,12 +1,18 @@
 import flet as ft
 
+from app.state import AppState
 from app.styles import PRIMARY, SIDEBAR_WIDTH, TEXT, TEXT_SECONDARY, WHITE
 
 
 class Sidebar:
 
-    def __init__(self, page: ft.Page):
+    def __init__(
+        self,
+        page: ft.Page,
+        state: AppState,
+    ):
         self.page = page
+        self.state = state
 
     def navigate(self, route: str):
         self.page.navigate(route)
@@ -16,6 +22,7 @@ class Sidebar:
         text: str,
         route: str,
         icon=None,
+        disabled=False,
     ):
         return ft.Button(
             content=ft.Row(
@@ -39,6 +46,7 @@ class Sidebar:
             ),
             width=SIDEBAR_WIDTH - 30,
             height=42,
+            disabled=disabled,
             on_click=lambda e: self.navigate(route),
         )
 
@@ -95,6 +103,7 @@ class Sidebar:
                         "Рапорт",
                         "/reports",
                         ft.Icons.DESCRIPTION_OUTLINED,
+                        disabled=not self.state.imported,
                     ),
                     ft.Container(
                         expand=True,
