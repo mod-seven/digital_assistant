@@ -1,5 +1,3 @@
-# app/components/sidebar.py
-
 import flet as ft
 
 from app.styles import PRIMARY, SIDEBAR_WIDTH, TEXT, TEXT_SECONDARY, WHITE
@@ -53,7 +51,6 @@ class Sidebar:
             content=ft.Column(
                 spacing=6,
                 controls=[
-                    # Логотип
                     ft.Container(
                         padding=10,
                         content=ft.Row(
@@ -89,7 +86,6 @@ class Sidebar:
                         color="#EEEEEE",
                     ),
                     ft.Container(height=8),
-                    # Меню
                     self.menu_button(
                         "Головна",
                         "/",
@@ -100,7 +96,6 @@ class Sidebar:
                         "/reports",
                         ft.Icons.DESCRIPTION_OUTLINED,
                     ),
-                    # Заповнюємо простір
                     ft.Container(
                         expand=True,
                     ),

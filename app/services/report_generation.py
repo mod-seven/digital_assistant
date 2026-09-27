@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass
-from datetime import date
+from datetime import date, datetime
 from pydoc import doc
 
 import pandas as pd
@@ -210,7 +210,7 @@ class ReportGeneration:
         tax_id: str,
         order_name: str,
         oder_number: str,
-        oder_date: date,
+        oder_date: str,
         date_raport: str = date.today().strftime("%d.%m.%Y"),
     ) -> Context:
         person = self.repository.get_person_by_tax_id(tax_id)
@@ -221,7 +221,7 @@ class ReportGeneration:
         )
         row = self.repository.get_row_by_position_code(position_code=position_code)
 
-        order = f"{order_name} від {format_date_ukrainian(oder_date)} №{oder_number}"
+        order = f"{order_name} від {format_date_ukrainian(datetime.strptime(oder_date, '%d.%m.%Y'))} №{oder_number}"
         position = (
             row[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value]
             + " "

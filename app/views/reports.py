@@ -433,9 +433,7 @@ class ReportsView:
                     position_code=self.position_code.value,
                     order_name=self.order_name.value,
                     oder_number=self.oder_number.value,
-                    oder_date=datetime.strptime(
-                        self.oder_date.value.strip(), "%d.%m.%Y"
-                    ),
+                    oder_date=self.oder_date.value.strip(),
                     tax_id=self.selected_tax_id,
                     date_raport=self.date_report.value,
                 )

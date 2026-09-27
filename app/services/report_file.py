@@ -4,7 +4,6 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from app.constants import ReportType
-from app.services.report_generation import ReportGeneration
 
 
 class ReportFile:
@@ -16,12 +15,12 @@ class ReportFile:
                 "date_raport": "Дата складання рапорту",
             },
             ReportType.REPORT_ACCEPTED_POSITION.name: {
-                "position_code": "Код посади",
+                "position_code": "Код посади (Імпульс)",
                 "tax_id": "РНОКПП військовослужбовця",
-                "order_name": "Назва наказу",
-                "oder_number": "Номер наказу",
-                "oder_date": "Дата наказу",
-                "date_raport": "Дата складання рапорту",
+                "order_name": "Назва наказу по особовому складу. Приклад: Командира військової частини А7379",
+                "oder_number": "Номер наказу по особовому складу",
+                "oder_date": "Дата наказу (формат клітинки текст)",
+                "date_raport": "Дата складання рапорту (формат клітинки текст)",
             },
         }
 
