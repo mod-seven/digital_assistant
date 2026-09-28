@@ -49,6 +49,10 @@ class ReportsView:
                     text=ReportType.REPORT_ACCEPTED_POSITION.value,
                 ),
                 ft.DropdownOption(
+                    key=ReportType.REPOST_OZDOROVLENNYA.name,
+                    text=ReportType.REPOST_OZDOROVLENNYA.value,
+                ),
+                ft.DropdownOption(
                     key=ReportType.REPOSTS_FFROM_FILE.name,
                     text=ReportType.REPOSTS_FFROM_FILE.value,
                 ),
@@ -115,6 +119,9 @@ class ReportsView:
 
         elif self.report_type == ReportType.REPOSTS_FFROM_FILE.name:
             self.form_container.content = self.reports_from_file_form()
+
+        elif self.report_type == ReportType.REPOST_OZDOROVLENNYA.name:
+            self.form_container.content = self.report_ozdorovlennya_form()
 
         self.page.update()
 
@@ -444,6 +451,13 @@ class ReportsView:
                     file_data=self.report_file_data
                 )
 
+            elif self.report_type == ReportType.REPOST_OZDOROVLENNYA.name:
+                context = report_generation.get_context_ozdorovlennya(
+                    tax_id=self.selected_tax_id,
+                    year=self.year.value,
+                )
+                contexts.append(context)
+
             report_generation.generate_reports(contexts=contexts)
 
             self.show_message(f"Рапорт збережено:\n{file_path}")
@@ -594,3 +608,31 @@ class ReportsView:
         report_file.create_excel_template(filename=file_path)
 
         self.show_message(f"Рапорт збережено:\n{file_path}")
+
+    def report_ozdorovlennya_form(self):
+        self.year = ft.TextField(
+            label="Рік",
+            hint_text="2026",
+            value=datetime.now().strftime("%Y"),
+            expand=True,
+        )
+        self.date_report = ft.TextField(
+            label="Дата рапорту",
+            hint_text="ДД.ММ.РРРР",
+            value=datetime.now().strftime("%d.%m.%Y"),
+            expand=True,
+        )
+
+        return self.form_card(
+            title="Рапорт на оздоровчі",
+            controls=[
+                *self.person_fields(),
+                ft.Row(
+                    controls=[
+                        self.year,
+                        self.date_report,
+                    ],
+                ),
+                self.action_buttons(),
+            ],
+        )

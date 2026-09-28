@@ -275,3 +275,29 @@ class ReportGeneration:
                 contexts.append(context)
 
         return contexts
+
+    def get_context_ozdorovlennya(
+        self,
+        tax_id: str,
+        year: str = date.today().strftime("%Y"),
+        date_raport: str = date.today().strftime("%d.%m.%Y"),
+    ):
+        person = self.repository.get_person_by_tax_id(tax_id)
+        context = self._get_context(person=person, date=date_raport)
+
+        text = (
+            "У відповідності до розділу до XXІІІ “Порядку виплати грошового забезпечення військовослужбовцям "
+            "Збройних сил України та деяким іншим особам”, затвердженого наказом Міністерства оборони "
+            "України від 07.06.2018 № 260, прошу Вашого клопотання перед вищим командуванням про виплату "
+            f"мені грошової допомоги на оздоровлення за {year} рік."
+        )
+
+        rt = RichText()
+        rt.add(
+            text,
+            font=WORD_FONT,
+            size=WORD_SIZE,
+        )
+
+        context.text = rt
+        return context
