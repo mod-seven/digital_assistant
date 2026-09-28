@@ -6,8 +6,10 @@ import pandas as pd
 from docx import Document
 from docxcompose.composer import Composer
 from docxtpl import DocxTemplate, RichText
+from shevchenko import GrammaticalCase
 
 from app.exclusion import ReportGenerationExclusion
+from app.services.ukrainian_declension import get_shevchenko_result
 from app.settings import TEMPLATE_REPORT_PATH
 from app.utils import format_date_ukrainian
 
@@ -16,6 +18,8 @@ from app.utils import format_date_ukrainian
 class Context:
     full_name: str
     rank: str
+    full_name_genitsve: str
+    rank_genitsve: str
     full_job_title: str
     date: str
     next_comander_position: str
@@ -133,9 +137,23 @@ class ReportGeneration:
         if subordination:
             next_comander_position = subordination[0].get("current_position")
 
+        full_name = self.get_name_and_surname(person[TableHeader.FULL_NAME.value])
+        full_name_split = full_name.split(" ")
+        rank = person[TableHeader.RANK.value]
+
+        result_shevchenko = get_shevchenko_result(
+            grammatacal_case=GrammaticalCase.GENITIVE,
+            gender=person[TableHeader.GENDER.value],
+            given_name=full_name_split[0],
+            family_name=full_name_split[1],
+            military_rank=rank,
+        )
+
         return Context(
-            full_name=self.get_name_and_surname(person[TableHeader.FULL_NAME.value]),
-            rank=person[TableHeader.RANK.value],
+            full_name=full_name,
+            rank=rank,
+            full_name_genitsve=f"{result_shevchenko.get('givenName')} {result_shevchenko.get('familyName')}",
+            rank_genitsve=result_shevchenko.get("militaryRank"),
             full_job_title=self._get_full_job_title(person),
             date=date,
             next_comander_position=next_comander_position,

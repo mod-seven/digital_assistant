@@ -13,3 +13,7 @@ class ExcelPersonalRepositoryExclusion(BaseExclusion):
 
 class ReportGenerationExclusion(BaseExclusion):
     pass
+
+
+class ShevchenkoExclusion(BaseExclusion):
+    pass

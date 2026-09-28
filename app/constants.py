@@ -18,6 +18,7 @@ class TableHeader(str, Enum):
     FULL_JOB_TITLE = "Повна назва посади"
     FULL_JOB_TITLE_ACCUSATIVE = "Повна назва посади (знахідний)"
     FULL_JOB_TITLE_DATIVE = "Повна назва посади (давальний)"
+    GENDER = "Стать"
 
 
 class StatusPersonal(str, Enum):
