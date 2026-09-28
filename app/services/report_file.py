@@ -22,6 +22,11 @@ class ReportFile:
                 "oder_date": "Дата наказу (формат клітинки текст)",
                 "date_raport": "Дата складання рапорту (формат клітинки текст)",
             },
+            ReportType.REPOST_OZDOROVLENNYA.name: {
+                "tax_id": "РНОКПП військовослужбовця",
+                "year": "Рік виплати. Приклад: 2026",
+                "date_raport": "Дата складання рапорту (формат клітинки текст)",
+            },
         }
 
     def create_excel_template(self, filename: str):
