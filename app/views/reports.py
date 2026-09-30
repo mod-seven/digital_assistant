@@ -49,6 +49,10 @@ class ReportsView:
                     text=ReportType.REPORT_ACCEPTED_POSITION.value,
                 ),
                 ft.DropdownOption(
+                    key=ReportType.REPOST_SHHORICHNU_VIDPUSTKU.name,
+                    text=ReportType.REPOST_SHHORICHNU_VIDPUSTKU.value,
+                ),
+                ft.DropdownOption(
                     key=ReportType.REPOST_OZDOROVLENNYA.name,
                     text=ReportType.REPOST_OZDOROVLENNYA.value,
                 ),
@@ -122,6 +126,9 @@ class ReportsView:
 
         elif self.report_type == ReportType.REPOST_OZDOROVLENNYA.name:
             self.form_container.content = self.report_ozdorovlennya_form()
+
+        elif self.report_type == ReportType.REPOST_SHHORICHNU_VIDPUSTKU.name:
+            self.form_container.content = self.report_shhorichnu_vidpustku_form()
 
         self.page.update()
 
@@ -458,6 +465,20 @@ class ReportsView:
                 )
                 contexts.append(context)
 
+            elif self.report_type == ReportType.REPOST_SHHORICHNU_VIDPUSTKU.name:
+                context = report_generation.get_shhorichnu_vidpustku(
+                    tax_id=self.selected_tax_id,
+                    tvo_tax_id=None,
+                    star_data=self.star_data.value,
+                    year=self.year.value,
+                    days=int(self.days.value),
+                    roud_days=self.roud_days.value,
+                    adress=self.adress.value,
+                    phone=self.phone.value,
+                    date_raport=self.date_report.value,
+                )
+                contexts.append(context)
+
             report_generation.generate_reports(contexts=contexts)
 
             self.show_message(f"Рапорт збережено:\n{file_path}")
@@ -630,6 +651,70 @@ class ReportsView:
                 ft.Row(
                     controls=[
                         self.year,
+                        self.date_report,
+                    ],
+                ),
+                self.action_buttons(),
+            ],
+        )
+
+    def report_shhorichnu_vidpustku_form(self):
+        self.year = ft.TextField(
+            label="Рік",
+            hint_text="2026",
+            value=datetime.now().strftime("%Y"),
+            expand=True,
+        )
+        self.days = ft.TextField(
+            label="Кількість днів відпустки",
+            expand=True,
+        )
+        self.roud_days = ft.TextField(
+            label="Кількість днів на дорогу",
+            expand=True,
+        )
+        self.adress = ft.TextField(
+            label="Адреса",
+            expand=True,
+        )
+        self.phone = ft.TextField(
+            label="Телефон",
+            hint_text="+380000000000",
+            expand=True,
+        )
+        self.star_data = ft.TextField(
+            label="Дата початку відпустки",
+            hint_text="ДД.ММ.РРРР",
+            value=datetime.now().strftime("%d.%m.%Y"),
+            expand=True,
+        )
+
+        self.date_report = ft.TextField(
+            label="Дата рапорту",
+            hint_text="ДД.ММ.РРРР",
+            value=datetime.now().strftime("%d.%m.%Y"),
+            expand=True,
+        )
+
+        return self.form_card(
+            title="Рапорт на щорічну основну відпустку",
+            controls=[
+                *self.person_fields(),
+                ft.Row(
+                    controls=[
+                        self.star_data,
+                        self.days,
+                        self.roud_days,
+                        self.year,
+                    ],
+                ),
+                ft.Divider(
+                    color=BORDER,
+                ),
+                ft.Row(
+                    controls=[
+                        self.adress,
+                        self.phone,
                         self.date_report,
                     ],
                 ),

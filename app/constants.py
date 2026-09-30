@@ -43,3 +43,4 @@ class ReportType(str, Enum):
     REPORT_ACCEPTED_POSITION = "Рапорт посаду прийняв"
     REPOSTS_FFROM_FILE = "Генерація рапортів з файлу"
     REPOST_OZDOROVLENNYA = "Рапорт на оздоровчі"
+    REPOST_SHHORICHNU_VIDPUSTKU = "Рапорт на щорочну основну відпустку"

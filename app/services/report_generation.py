@@ -11,7 +11,7 @@ from shevchenko import GrammaticalCase
 from app.exclusion import ReportGenerationExclusion
 from app.services.ukrainian_declension import get_shevchenko_result
 from app.settings import TEMPLATE_REPORT_PATH
-from app.utils import format_date_ukrainian
+from app.utils import format_date_ukrainian, format_day_text, number_to_words_ua
 
 
 @dataclass
@@ -281,7 +281,7 @@ class ReportGeneration:
         tax_id: str,
         year: str = date.today().strftime("%Y"),
         date_raport: str = date.today().strftime("%d.%m.%Y"),
-    ):
+    ) -> Context:
         person = self.repository.get_person_by_tax_id(tax_id)
         context = self._get_context(person=person, date=date_raport)
 
@@ -295,6 +295,91 @@ class ReportGeneration:
         rt = RichText()
         rt.add(
             text,
+            font=WORD_FONT,
+            size=WORD_SIZE,
+        )
+
+        context.text = rt
+        return context
+
+    def get_shhorichnu_vidpustku(
+        self,
+        tax_id: str,
+        days: int,
+        roud_days: str | None,
+        tvo_tax_id: str | None,
+        adress: str,
+        phone: str,
+        star_data: str,
+        year: str = date.today().strftime("%Y"),
+        date_raport: str = date.today().strftime("%d.%m.%Y"),
+    ) -> Context:
+        person = self.repository.get_person_by_tax_id(tax_id)
+        context = self._get_context(person=person, date=date_raport)
+
+        rt = RichText()
+        rt.add(
+            (
+                f"Прошу Вашого дозволу про надання мені частини щорічної основної відпустки, за {year} рік, "
+                f"терміном на {days} ({number_to_words_ua(days)}) календарних днів з {star_data} року."
+            ),
+            font=WORD_FONT,
+            size=WORD_SIZE,
+        )
+
+        if roud_days:
+            roud_days = int(roud_days)
+            rt.add("\n\t")
+            rt.add(
+                (
+                    f"Прошу надати час, необхідний для проїзду в межах України до місця проведення "
+                    f"відпустки та назад у кількості {roud_days} {format_day_text(roud_days)}."
+                ),
+                font=WORD_FONT,
+                size=WORD_SIZE,
+            )
+
+        rt.add("\n\t")
+        rt.add(
+            (
+                "З правилами поведінки в громадських місцях, забороною вживання алкогольних та наркотичних "
+                "речовин під час проведення відпустки ознайомлений та зобов’язуюсь їх виконувати. Зобов’язуюсь повернутись вчасно."
+            ),
+            font=WORD_FONT,
+            size=WORD_SIZE,
+        )
+
+        if tvo_tax_id:
+            tvo_person = self.repository.get_person_by_tax_id(tvo_tax_id)
+            full_name = tvo_person[TableHeader.FULL_NAME.value].split(" ")
+
+            result_shevchenko = get_shevchenko_result(
+                grammatacal_case=GrammaticalCase.ACCUSATIVE,
+                gender=tvo_person[TableHeader.GENDER.value],
+                given_name=full_name[1],
+                patronymic_name=full_name[2],
+                family_name=full_name[0],
+                military_rank=tvo_person[TableHeader.RANK.value],
+            )
+            rt.add("\n\t")
+            rt.add(
+                (
+                    f"Тимчасове виконання обов’язків прошу покласти на: {tvo_person[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value]} "
+                    f"{result_shevchenko.get('familyName')} {result_shevchenko.get('givenName')} {result_shevchenko.get('patronymicName')}."
+                ),
+                font=WORD_FONT,
+                size=WORD_SIZE,
+            )
+
+        rt.add("\n\t")
+        rt.add(
+            f"Відпустку буду проводити за адресою: {adress}.",
+            font=WORD_FONT,
+            size=WORD_SIZE,
+        )
+        rt.add("\n\t")
+        rt.add(
+            f"Телефон: {phone}.",
             font=WORD_FONT,
             size=WORD_SIZE,
         )
