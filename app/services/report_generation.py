@@ -245,7 +245,9 @@ class ReportGeneration:
             + " "
             + f"військової частини {MILITARY_UNIT_NUMBER}"
         )
-        data_accepted = format_date_ukrainian(date.today())
+        data_accepted = format_date_ukrainian(
+            datetime.strptime(date_raport, "%d.%m.%Y")
+        )
 
         rt = RichText()
         rt.add(
@@ -364,7 +366,7 @@ class ReportGeneration:
             rt.add("\n\t")
             rt.add(
                 (
-                    f"Тимчасове виконання обов’язків прошу покласти на: {tvo_person[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value]} "
+                    f"Тимчасове виконання обов’язків прошу покласти на: {tvo_person[TableHeader.FULL_JOB_TITLE_ACCUSATIVE.value]} {result_shevchenko.get('militaryRank')} "
                     f"{result_shevchenko.get('familyName')} {result_shevchenko.get('givenName')} {result_shevchenko.get('patronymicName')}."
                 ),
                 font=WORD_FONT,
