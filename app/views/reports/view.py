@@ -23,6 +23,7 @@ class ReportsView:
 
         self.report_type = None
         self.tax_id = None
+        self.person = {}
 
         self.report_type_dropdown = None
         self.form_container = None

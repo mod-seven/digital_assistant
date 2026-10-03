@@ -157,8 +157,17 @@ def person_selected(view, tax_id, name):
     view.selected_tax_id = tax_id
     view.tax_id.value = name
 
+    view.person = view.state.personnel_repository.get_person_by_tax_id(tax_id)
+
+    refresh_person_fields(view)
+
     view.person_suggestions.controls.clear()
     view.person_suggestions.visible = False
     view.person_suggestions.update()
 
     view.page.update()
+
+
+def refresh_person_fields(view):
+    view.phone.value = view.person.get(TableHeader.PHONE.value, "")
+    view.adress.value = view.person.get(TableHeader.ADDRESS.value, "")

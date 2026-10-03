@@ -20,6 +20,7 @@ def import_excel(file_path, state: AppState):
             dtype={
                 TableHeader.POSITION_CODE.value: str,
                 TableHeader.TAX_ID.value: str,
+                TableHeader.PHONE.value: str,
             },
         )
 
