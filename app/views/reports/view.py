@@ -7,6 +7,7 @@ from app.state import AppState
 from app.styles import BG_COLOR, CONTENT_PADDING, TEXT, TEXT_SECONDARY, WHITE
 from app.views.reports import (
     accepted_position,
+    free_theme,
     from_file,
     over_position,
     ozdorovlennya,
@@ -49,6 +50,10 @@ class ReportsView:
                 ft.DropdownOption(
                     key=ReportType.REPOST_OZDOROVLENNYA.name,
                     text=ReportType.REPOST_OZDOROVLENNYA.value,
+                ),
+                ft.DropdownOption(
+                    key=ReportType.REPOST_FREE_THEME.name,
+                    text=ReportType.REPOST_FREE_THEME.value,
                 ),
                 ft.DropdownOption(
                     key=ReportType.REPOSTS_FFROM_FILE.name,
@@ -109,6 +114,7 @@ class ReportsView:
             ReportType.REPOSTS_FFROM_FILE.name: from_file.build,
             ReportType.REPOST_OZDOROVLENNYA.name: ozdorovlennya.build,
             ReportType.REPOST_SHHORICHNU_VIDPUSTKU.name: shhorichnu_vidpustku.build,
+            ReportType.REPOST_FREE_THEME.name: free_theme.build,
         }
 
         form_builder = forms.get(self.report_type)
@@ -200,6 +206,13 @@ class ReportsView:
                     roud_days=self.roud_days.value,
                     adress=self.adress.value,
                     phone=self.phone.value,
+                    date_raport=self.date_report.value,
+                )
+                contexts.append(context)
+
+            elif self.report_type == ReportType.REPOST_FREE_THEME.name:
+                context = report_generation.get_context_free_theme(
+                    tax_id=self.selected_tax_id,
                     date_raport=self.date_report.value,
                 )
                 contexts.append(context)

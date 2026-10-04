@@ -46,3 +46,4 @@ class ReportType(str, Enum):
     REPOSTS_FFROM_FILE = "Генерація рапортів з файлу"
     REPOST_OZDOROVLENNYA = "Рапорт на оздоровчі"
     REPOST_SHHORICHNU_VIDPUSTKU = "Рапорт на щорочну основну відпустку"
+    REPOST_FREE_THEME = "Рапорт на вільну тему"

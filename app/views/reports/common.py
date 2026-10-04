@@ -169,5 +169,8 @@ def person_selected(view, tax_id, name):
 
 
 def refresh_person_fields(view):
-    view.phone.value = view.person.get(TableHeader.PHONE.value, "")
-    view.adress.value = view.person.get(TableHeader.ADDRESS.value, "")
+    if hasattr(view, "phone"):
+        view.phone.value = view.person.get(TableHeader.PHONE.value, "")
+
+    if hasattr(view, "adress"):
+        view.adress.value = view.person.get(TableHeader.ADDRESS.value, "")

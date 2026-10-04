@@ -388,3 +388,22 @@ class ReportGeneration:
 
         context.text = rt
         return context
+
+    def get_context_free_theme(
+        self,
+        tax_id: str,
+        date_raport: str = date.today().strftime("%d.%m.%Y"),
+    ) -> Context:
+        person = self.repository.get_person_by_tax_id(tax_id)
+        context = self._get_context(person=person, date=date_raport)
+
+        rt = RichText()
+        rt.add(
+            f"Дійсним доповідаю, що ...",
+            font=WORD_FONT,
+            size=WORD_SIZE,
+        )
+
+        context.text = rt
+
+        return context
