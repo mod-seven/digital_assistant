@@ -8,3 +8,9 @@ else:
 
 
 TEMPLATE_REPORT_PATH = BASE_DIR / "assets" / "templates" / "template_report.docx"
+
+SIGNATURES_ROOT = Path(r"C:\Users\chewbaka\Desktop\Signatures")
+
+SIGNATURES_DB = SIGNATURES_ROOT / "signatures.db"
+
+SIGNATURES_IMAGES = SIGNATURES_ROOT / "images"

@@ -6,9 +6,7 @@ from tkinter import filedialog
 
 import flet as ft
 
-from app.components.sidebar import Sidebar
 from app.services.import_excel import import_excel
-from app.state import AppState
 from app.styles import (
     BG_COLOR,
     BORDER,
@@ -26,15 +24,13 @@ class HomeView:
 
     def __init__(
         self,
-        page: ft.Page,
-        state: AppState,
+        page,
+        state,
+        router,
     ):
         self.page = page
         self.state = state
-
-    # ---------------------------------------------------------
-    # Вибір Excel
-    # ---------------------------------------------------------
+        self.router = router
 
     def select_excel(self, e):
 
@@ -64,9 +60,7 @@ class HomeView:
             self.state,
         )
 
-        self.page.controls.clear()
-        self.page.add(self.build())
-        self.page.update()
+        self.router.route_change()
 
     def update_statistics(self):
         self.staff_value.value = self.state.number_of_staff_positions
@@ -213,17 +207,6 @@ class HomeView:
             expand=True,
             spacing=0,
             controls=[
-                # ---------------------------------------------
-                # Ліва панель
-                # ---------------------------------------------
-                Sidebar(self.page, self.state).build(),
-                ft.VerticalDivider(
-                    width=1,
-                    color=BORDER,
-                ),
-                # ---------------------------------------------
-                # Основна частина
-                # ---------------------------------------------
                 ft.Container(
                     expand=True,
                     bgcolor=BG_COLOR,

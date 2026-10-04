@@ -1,6 +1,5 @@
 import flet as ft
 
-from app.components.sidebar import Sidebar
 from app.constants import ReportType
 from app.services.report_generation import ReportGeneration
 from app.state import AppState
@@ -94,7 +93,6 @@ class ReportsView:
 
         return ft.Row(
             controls=[
-                Sidebar(self.page, self.state).build(),
                 ft.Container(
                     content=content,
                     expand=True,

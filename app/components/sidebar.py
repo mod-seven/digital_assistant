@@ -105,6 +105,11 @@ class Sidebar:
                         ft.Icons.DESCRIPTION_OUTLINED,
                         disabled=not self.state.imported,
                     ),
+                    self.menu_button(
+                        "Підписи",
+                        "/signatures",
+                        ft.Icons.FINGERPRINT_OUTLINED,
+                    ),
                     ft.Container(
                         expand=True,
                     ),

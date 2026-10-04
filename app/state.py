@@ -3,7 +3,9 @@ from pathlib import Path
 
 import pandas as pd
 
+from app.database.connection import init_database
 from app.repositories.personnel import PandasExcelPersonnelRepository
+from app.repositories.signatures import SignaturesRepository
 
 
 @dataclass
@@ -17,6 +19,10 @@ class AppState:
     imported: bool = False
 
     personnel_repository: PandasExcelPersonnelRepository | None = None
+
+    # init_database()
+
+    signatures_repository = SignaturesRepository()
 
     _number_of_staff_positions: int | None = None
     _number_on_the_list: int | None = None
