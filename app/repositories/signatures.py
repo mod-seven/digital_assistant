@@ -28,6 +28,15 @@ class SignaturesRepository:
                 signature_id,
             )
 
+    def get_by_tax_id(
+        self,
+        tax_id: str,
+    ) -> Signature | None:
+
+        with get_session() as session:
+
+            return session.scalar(select(Signature).where(Signature.tax_id == tax_id))
+
     def search(
         self,
         query: str,

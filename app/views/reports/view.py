@@ -160,7 +160,8 @@ class ReportsView:
             contexts = []
 
             report_generation = ReportGeneration(
-                repository=self.state.personnel_repository,
+                personnel_repository=self.state.personnel_repository,
+                repository_signatures=self.state.signatures_repository,
                 path_save_report=file_path,
             )
 

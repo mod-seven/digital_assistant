@@ -1,14 +1,16 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import date, datetime
-from pydoc import doc
 
 import pandas as pd
 from docx import Document
+from docx.shared import Mm
 from docxcompose.composer import Composer
 from docxtpl import DocxTemplate, RichText
 from shevchenko import GrammaticalCase
 
 from app.exclusion import ReportGenerationExclusion
+from app.repositories.signatures import SignaturesRepository
+from app.services.floating_image import FloatingImage
 from app.services.ukrainian_declension import get_shevchenko_result
 from app.settings import TEMPLATE_REPORT_PATH
 from app.utils import format_date_ukrainian, format_day_text, number_to_words_ua
@@ -21,6 +23,7 @@ class Context:
     full_name_genitsve: str
     rank_genitsve: str
     full_job_title: str
+    signature: str
     date: str
     next_comander_position: str
     text: str
@@ -44,8 +47,14 @@ from app.repositories.personnel import ExcelPersonalRepository
 
 
 class ReportGeneration:
-    def __init__(self, repository: ExcelPersonalRepository, path_save_report: str):
-        self.repository = repository
+    def __init__(
+        self,
+        personnel_repository: ExcelPersonalRepository,
+        repository_signatures: SignaturesRepository,
+        path_save_report: str,
+    ):
+        self.personnel_repository = personnel_repository
+        self.repository_signatures = repository_signatures
         self.comander_position_dative = f"Командиру {MILITARY_UNIT}"
         self.path_template_report = TEMPLATE_REPORT_PATH
         self.path_save_report = path_save_report
@@ -55,7 +64,7 @@ class ReportGeneration:
         return name_parts[1] + " " + name_parts[0]
 
     def get_text_subordination(self, position_code: str) -> str:
-        subordination = self.repository.get_subordination_by_position_code(
+        subordination = self.personnel_repository.get_subordination_by_position_code(
             position_code=position_code
         )
 
@@ -97,6 +106,9 @@ class ReportGeneration:
                     ),
                     "rank": current_row[TableHeader.RANK.value],
                     "full_job_title": self._get_full_job_title(current_row),
+                    "signature": self._get_signature_path(
+                        tax_id=current_row[TableHeader.TAX_ID.value]
+                    ),
                     "current_position": current_row[
                         TableHeader.FULL_JOB_TITLE_DATIVE.value
                     ].capitalize()
@@ -155,15 +167,47 @@ class ReportGeneration:
             full_name_genitsve=f"{result_shevchenko.get('givenName')} {result_shevchenko.get('familyName')}",
             rank_genitsve=result_shevchenko.get("militaryRank"),
             full_job_title=self._get_full_job_title(person),
+            signature=self._get_signature_path(tax_id=person[TableHeader.TAX_ID.value]),
             date=date,
             next_comander_position=next_comander_position,
             text="",
             subordination=subordination,
         )
 
+    def _get_signature_path(self, tax_id: str) -> str | None:
+        try:
+            signature = self.repository_signatures.get_by_tax_id(tax_id=tax_id)
+        except Exception:
+            return None
+
+        if signature:
+            return str(self.repository_signatures.get_image_path(signature=signature))
+
+        return None
+
+    def _include_inline_images(self, doc: DocxTemplate, context: Context) -> Context:
+
+        if context.signature:
+            context.signature = FloatingImage(
+                doc,
+                context.signature,
+                width=Mm(40),
+            )
+
+        for item in context.subordination:
+            if item.get("signature"):
+                item["signature"] = FloatingImage(
+                    doc,
+                    item.get("signature"),
+                    width=Mm(40),
+                )
+
+        return context
+
     def _generate_document(self, context: Context) -> DocxTemplate:
         doc = DocxTemplate(self.path_template_report)
-        doc.render(asdict(context))
+        updated_context = self._include_inline_images(doc=doc, context=context)
+        doc.render(updated_context.__dict__)
         return doc
 
     def generate_reports(self, contexts: list[Context]) -> None:
@@ -201,7 +245,7 @@ class ReportGeneration:
         tax_id: str,
         date_raport: str = date.today().strftime("%d.%m.%Y"),
     ) -> Context:
-        person = self.repository.get_person_by_tax_id(tax_id)
+        person = self.personnel_repository.get_person_by_tax_id(tax_id)
         context = self._get_context(person=person, date=date_raport)
 
         position = (
@@ -231,13 +275,15 @@ class ReportGeneration:
         oder_date: str,
         date_raport: str = date.today().strftime("%d.%m.%Y"),
     ) -> Context:
-        person = self.repository.get_person_by_tax_id(tax_id)
+        person = self.personnel_repository.get_person_by_tax_id(tax_id)
         context = self._get_context(
             person=person,
             position_code=position_code,
             date=date_raport,
         )
-        row = self.repository.get_row_by_position_code(position_code=position_code)
+        row = self.personnel_repository.get_row_by_position_code(
+            position_code=position_code
+        )
 
         order = f"{order_name} від {format_date_ukrainian(datetime.strptime(oder_date, '%d.%m.%Y'))} №{oder_number}"
         position = (
@@ -284,7 +330,7 @@ class ReportGeneration:
         year: str = date.today().strftime("%Y"),
         date_raport: str = date.today().strftime("%d.%m.%Y"),
     ) -> Context:
-        person = self.repository.get_person_by_tax_id(tax_id)
+        person = self.personnel_repository.get_person_by_tax_id(tax_id)
         context = self._get_context(person=person, date=date_raport)
 
         text = (
@@ -316,7 +362,7 @@ class ReportGeneration:
         year: str = date.today().strftime("%Y"),
         date_raport: str = date.today().strftime("%d.%m.%Y"),
     ) -> Context:
-        person = self.repository.get_person_by_tax_id(tax_id)
+        person = self.personnel_repository.get_person_by_tax_id(tax_id)
         context = self._get_context(person=person, date=date_raport)
 
         rt = RichText()
@@ -352,7 +398,7 @@ class ReportGeneration:
         )
 
         if tvo_tax_id:
-            tvo_person = self.repository.get_person_by_tax_id(tvo_tax_id)
+            tvo_person = self.personnel_repository.get_person_by_tax_id(tvo_tax_id)
             full_name = tvo_person[TableHeader.FULL_NAME.value].split(" ")
 
             result_shevchenko = get_shevchenko_result(
@@ -394,7 +440,7 @@ class ReportGeneration:
         tax_id: str,
         date_raport: str = date.today().strftime("%d.%m.%Y"),
     ) -> Context:
-        person = self.repository.get_person_by_tax_id(tax_id)
+        person = self.personnel_repository.get_person_by_tax_id(tax_id)
         context = self._get_context(person=person, date=date_raport)
 
         rt = RichText()
