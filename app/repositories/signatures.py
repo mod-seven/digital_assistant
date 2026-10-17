@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from app.database.connection import get_session
 from app.database.models import Signature
-from app.settings import SIGNATURES_IMAGES
+from app.settings import get_signatures_images_dir
 
 
 class SignaturesRepository:
@@ -85,14 +85,15 @@ class SignaturesRepository:
         if extension not in allowed_extensions:
             raise ValueError("Дозволені формати: " "PNG, JPG, JPEG, BMP.")
 
-        SIGNATURES_IMAGES.mkdir(
+        images_dir = get_signatures_images_dir()
+        images_dir.mkdir(
             parents=True,
             exist_ok=True,
         )
 
         file_name = f"{uuid.uuid4().hex}{extension}"
 
-        destination = SIGNATURES_IMAGES / file_name
+        destination = images_dir / file_name
 
         shutil.copy2(
             source_image,
@@ -174,7 +175,7 @@ class SignaturesRepository:
             if signature is None:
                 return False
 
-            image_path = SIGNATURES_IMAGES / signature.file_name
+            image_path = get_signatures_images_dir() / signature.file_name
 
             session.delete(signature)
 
@@ -190,4 +191,4 @@ class SignaturesRepository:
         signature: Signature,
     ) -> Path:
 
-        return SIGNATURES_IMAGES / signature.file_name
+        return get_signatures_images_dir() / signature.file_name

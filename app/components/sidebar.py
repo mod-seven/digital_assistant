@@ -110,6 +110,11 @@ class Sidebar:
                         "/signatures",
                         ft.Icons.FINGERPRINT_OUTLINED,
                     ),
+                    self.menu_button(
+                        "Налаштування",
+                        "/settings",
+                        ft.Icons.SETTINGS_OUTLINED,
+                    ),
                     ft.Container(
                         expand=True,
                     ),
@@ -135,6 +140,11 @@ class Sidebar:
                         ),
                         width=SIDEBAR_WIDTH - 30,
                         height=40,
+                    ),
+                    ft.Text(
+                        f"Акаунт: {(self.state.current_user or {}).get('username', '')}",
+                        size=11,
+                        color="#6B7280",
                     ),
                     ft.Text(
                         "Digital Assistant v1.0",

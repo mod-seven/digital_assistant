@@ -17,10 +17,9 @@ class AppState:
     df: pd.DataFrame | None = None
 
     imported: bool = False
+    current_user: dict | None = None
 
     personnel_repository: PandasExcelPersonnelRepository | None = None
-
-    # init_database()
 
     signatures_repository = SignaturesRepository()
 

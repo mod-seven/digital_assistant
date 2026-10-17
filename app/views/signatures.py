@@ -3,6 +3,7 @@ from tkinter import filedialog
 
 import flet as ft
 
+from app.database.user import ROLE_ADMIN, ROLE_SIGNATURES
 from app.repositories.signatures import SignaturesRepository
 
 
@@ -12,6 +13,10 @@ class SignaturesView:
         self.state = state
 
         self.repository: SignaturesRepository = state.signatures_repository
+        self.can_manage = (state.current_user or {}).get("role") in {
+            ROLE_ADMIN,
+            ROLE_SIGNATURES,
+        }
 
         # =====================================================
         # СТАН БАЗИ ДАНИХ
@@ -39,6 +44,7 @@ class SignaturesView:
             "Додати підпис",
             icon=ft.Icons.ADD,
             on_click=self.add_signature,
+            visible=self.can_manage,
         )
 
         # =====================================================
@@ -235,6 +241,7 @@ class SignaturesView:
             icon=ft.Icons.EDIT,
             tooltip="Редагувати",
             on_click=lambda e, s=signature: (self.edit_signature(s)),
+            visible=self.can_manage,
         )
 
         # -----------------------------------------------------
@@ -246,6 +253,7 @@ class SignaturesView:
             tooltip="Видалити",
             icon_color=ft.Colors.RED,
             on_click=lambda e, s=signature: (self.confirm_delete(s)),
+            visible=self.can_manage,
         )
 
         # -----------------------------------------------------
@@ -284,6 +292,8 @@ class SignaturesView:
     # =========================================================
 
     def add_signature(self, e):
+        if not self.can_manage:
+            return
         if not self.database_available:
             return
 
@@ -385,6 +395,8 @@ class SignaturesView:
     # =========================================================
 
     def edit_signature(self, signature):
+        if not self.can_manage:
+            return
         if not self.database_available:
             return
 
@@ -453,6 +465,8 @@ class SignaturesView:
     # =========================================================
 
     def confirm_delete(self, signature):
+        if not self.can_manage:
+            return
         if not self.database_available:
             return
 
@@ -486,6 +500,8 @@ class SignaturesView:
         self,
         signature_id: int,
     ):
+        if not self.can_manage:
+            return
         if not self.database_available:
             return
 
