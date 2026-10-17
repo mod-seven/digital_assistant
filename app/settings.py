@@ -20,6 +20,7 @@ else:
     _config_root = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
 APP_CONFIG_DIR = _config_root / "DigitalAssistant"
 APP_CONFIG_FILE = APP_CONFIG_DIR / "config.json"
+APP_VERSION = "1.0.3"
 DEFAULT_SIGNATURES_DB = Path(r"C:\Users\chewbaka\Desktop\Signatures\signatures.db")
 
 

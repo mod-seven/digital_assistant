@@ -1,5 +1,6 @@
 import flet as ft
 
+from app.settings import APP_VERSION
 from app.state import AppState
 from app.styles import PRIMARY, SIDEBAR_WIDTH, TEXT, TEXT_SECONDARY, WHITE
 
@@ -147,7 +148,7 @@ class Sidebar:
                         color="#6B7280",
                     ),
                     ft.Text(
-                        "Digital Assistant v1.0",
+                        f"Digital Assistant v{APP_VERSION}",
                         size=11,
                         color="#9CA3AF",
                     ),
