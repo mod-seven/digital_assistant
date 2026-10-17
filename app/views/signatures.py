@@ -3,7 +3,7 @@ from tkinter import filedialog
 
 import flet as ft
 
-from app.database.user import ROLE_ADMIN, ROLE_SIGNATURES
+from app.constants import ROLE_ADMIN, ROLE_SIGNATURES
 from app.repositories.signatures import SignaturesRepository
 
 

@@ -4,12 +4,12 @@ from tkinter import filedialog
 
 import flet as ft
 
+from app.constants import ROLE_ADMIN, ROLES
 from app.database.connection import (
     configure_database,
     init_database,
     test_database_connection,
 )
-from app.database.user import ROLE_ADMIN, ROLES
 from app.repositories.user import UserRepository
 from app.services.auth import AuthService
 from app.settings import get_signatures_db_path, save_signatures_db_path

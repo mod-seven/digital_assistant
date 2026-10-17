@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import secrets
 
-from app.database.user import ROLES
+from app.constants import ROLES
 from app.repositories.user import UserRepository
 
 

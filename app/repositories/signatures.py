@@ -5,7 +5,7 @@ from pathlib import Path
 from sqlalchemy import select
 
 from app.database.connection import get_session
-from app.database.models import Signature
+from app.database.models.signature import Signature
 from app.settings import get_signatures_images_dir
 
 

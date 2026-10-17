@@ -47,3 +47,13 @@ class ReportType(str, Enum):
     REPOST_OZDOROVLENNYA = "Рапорт на оздоровчі"
     REPOST_SHHORICHNU_VIDPUSTKU = "Рапорт на щорочну основну відпустку"
     REPOST_FREE_THEME = "Рапорт на вільну тему"
+
+
+ROLE_ADMIN = "admin"
+ROLE_SIGNATURES = "signatures_manager"
+ROLE_VIEWER = "viewer"
+ROLES = {
+    ROLE_ADMIN: "Адміністратор",
+    ROLE_SIGNATURES: "Керування підписами",
+    ROLE_VIEWER: "Перегляд",
+}

@@ -51,7 +51,7 @@ def get_session():
 
 
 def init_database():
-    from app.database.models import Signature  # noqa: F401
-    from app.database.user import User  # noqa: F401
+    from app.database.models.signature import Signature  # noqa: F401
+    from app.database.models.user import User  # noqa: F401
 
     Base.metadata.create_all(engine)
