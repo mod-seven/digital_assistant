@@ -27,19 +27,27 @@ class AppRouter:
 
     def start(self):
         self.page.on_route_change = self.route_change
+
         try:
             path = get_signatures_db_path()
+
             if not path.is_file():
                 raise FileNotFoundError(f"Файл бази даних не знайдено: {path}")
+
             configure_database(path)
             test_database_connection()
             init_database()
+
             self.auth_ready = True
             self.auth_error = ""
+
+            self.page.go("/login")
+
         except Exception as ex:
             self.auth_ready = False
             self.auth_error = str(ex)
-        self.page.go("/database")
+
+            self.page.go("/database")
 
     def database_connected(self):
         self.auth_ready = True
