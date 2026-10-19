@@ -233,6 +233,12 @@ class SignaturesView:
             color=ft.Colors.GREY_600,
         )
 
+        created_by_text = ft.Text(
+            f"Додав: {signature.created_by or 'Невідомо'}",
+            size=12,
+            color=ft.Colors.GREY_600,
+        )
+
         # -----------------------------------------------------
         # EDIT
         # -----------------------------------------------------
@@ -273,6 +279,7 @@ class SignaturesView:
                             controls=[
                                 name_text,
                                 tax_id_text,
+                                created_by_text,
                                 file_text,
                             ],
                             expand=True,
@@ -367,6 +374,7 @@ class SignaturesView:
                 name=name,
                 tax_id=tax_id,
                 source_image=file_path,
+                created_by=(self.state.current_user or {}).get("username"),
             )
 
             self.close_dialog()

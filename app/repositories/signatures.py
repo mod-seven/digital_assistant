@@ -56,7 +56,13 @@ class SignaturesRepository:
 
             return session.scalars(statement).all()
 
-    def add(self, name: str, source_image: str | Path, tax_id: str) -> Signature:
+    def add(
+        self,
+        name: str,
+        source_image: str | Path,
+        tax_id: str,
+        created_by: str | None = None,
+    ) -> Signature:
 
         name = name.strip()
 
@@ -108,6 +114,7 @@ class SignaturesRepository:
                     name=name,
                     file_name=file_name,
                     tax_id=tax_id,
+                    created_by=created_by,
                 )
 
                 session.add(signature)

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
@@ -55,3 +55,12 @@ def init_database():
     from app.database.models.user import User  # noqa: F401
 
     Base.metadata.create_all(engine)
+
+    # create_all не додає нові колонки до вже існуючих SQLite-таблиць.
+    # Додаємо created_by для баз, створених попередніми версіями програми.
+    columns = {column["name"] for column in inspect(engine).get_columns("signatures")}
+    if "created_by" not in columns:
+        with engine.begin() as connection:
+            connection.exec_driver_sql(
+                "ALTER TABLE signatures ADD COLUMN created_by VARCHAR(80)"
+            )
