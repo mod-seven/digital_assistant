@@ -64,3 +64,9 @@ def init_database():
             connection.exec_driver_sql(
                 "ALTER TABLE signatures ADD COLUMN created_by VARCHAR(80)"
             )
+
+    if "is_active" not in columns:
+        with engine.begin() as connection:
+            connection.exec_driver_sql(
+                "ALTER TABLE signatures ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"
+            )

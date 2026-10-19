@@ -13,10 +13,12 @@ class SignaturesView:
         self.state = state
 
         self.repository: SignaturesRepository = state.signatures_repository
-        self.can_manage = (state.current_user or {}).get("role") in {
-            ROLE_ADMIN,
-            ROLE_SIGNATURES,
-        }
+        current_role = (state.current_user or {}).get("role")
+        self.is_admin = current_role == ROLE_ADMIN
+        self.can_manage = current_role in {ROLE_ADMIN, ROLE_SIGNATURES}
+        # Усі авторизовані користувачі можуть приховати підпис;
+        # лише адміністратор може відновлювати приховані підписи.
+        self.can_toggle = bool(state.current_user)
 
         # =====================================================
         # СТАН БАЗИ ДАНИХ
@@ -147,7 +149,8 @@ class SignaturesView:
 
     def load_signatures(self, search: str = ""):
         try:
-            signatures = self.repository.search(search)
+            # Адміністратор бачить також приховані підписи та може відновити їх.
+            signatures = self.repository.search(search, include_inactive=self.is_admin)
 
         except Exception as ex:
             print(f"База підписів недоступна: {ex}")
@@ -251,15 +254,31 @@ class SignaturesView:
         )
 
         # -----------------------------------------------------
-        # DELETE
+        # ПЕРЕМИКАЧ АКТИВНОСТІ (м'яке видалення / відновлення)
         # -----------------------------------------------------
 
-        delete_button = ft.IconButton(
-            icon=ft.Icons.DELETE,
-            tooltip="Видалити",
+        toggle_button = ft.IconButton(
+            icon=(
+                ft.Icons.VISIBILITY_OFF if signature.is_active else ft.Icons.VISIBILITY
+            ),
+            tooltip="Приховати підпис" if signature.is_active else "Відновити підпис",
+            icon_color=ft.Colors.ORANGE if signature.is_active else ft.Colors.GREEN,
+            on_click=lambda e, s=signature: self.toggle_signature(s),
+            visible=self.can_toggle and (signature.is_active or self.is_admin),
+        )
+
+        permanent_delete_button = ft.IconButton(
+            icon=ft.Icons.DELETE_FOREVER,
+            tooltip="Видалити файл і запис назавжди",
             icon_color=ft.Colors.RED,
-            on_click=lambda e, s=signature: (self.confirm_delete(s)),
-            visible=self.can_manage,
+            on_click=lambda e, s=signature: self.confirm_permanent_delete(s),
+            visible=self.is_admin,
+        )
+
+        status_text = ft.Text(
+            "Статус: активний" if signature.is_active else "Статус: прихований",
+            size=12,
+            color=ft.Colors.GREY_600 if signature.is_active else ft.Colors.ORANGE,
         )
 
         # -----------------------------------------------------
@@ -280,13 +299,15 @@ class SignaturesView:
                                 name_text,
                                 tax_id_text,
                                 created_by_text,
+                                status_text,
                                 file_text,
                             ],
                             expand=True,
                             spacing=5,
                         ),
                         edit_button,
-                        delete_button,
+                        toggle_button,
+                        permanent_delete_button,
                     ],
                     vertical_alignment=(ft.CrossAxisAlignment.CENTER),
                 ),
@@ -469,75 +490,139 @@ class SignaturesView:
                 pass
 
     # =========================================================
-    # DELETE CONFIRMATION
+    # SOFT DELETE / RESTORE
     # =========================================================
 
-    def confirm_delete(self, signature):
-        if not self.can_manage:
+    def toggle_signature(self, signature):
+        if not self.can_toggle or not self.database_available:
             return
-        if not self.database_available:
+
+        # Неадміністратор може тільки приховувати активні підписи.
+        if not self.is_admin and not signature.is_active:
+            return
+
+        new_active = not signature.is_active
+        action = "відновити" if new_active else "приховати"
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Зміна доступності підпису"),
+            content=ft.Text(
+                f"Ви дійсно хочете {action} підпис «{signature.name}»?\n\n"
+                + (
+                    "Файл залишиться в базі, підпис можна буде відновити."
+                    if not new_active
+                    else "Підпис знову з'явиться у загальному списку."
+                )
+            ),
+            actions=[
+                ft.TextButton("Скасувати", on_click=lambda e: self.close_dialog()),
+                ft.Button(
+                    "Підтвердити",
+                    on_click=lambda e, sid=signature.id, active=new_active: self.set_signature_active(
+                        sid, active
+                    ),
+                ),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        self.page.show_dialog(dialog)
+
+    def set_signature_active(self, signature_id: int, active: bool):
+        if not self.can_toggle or not self.database_available:
+            return
+        if active and not self.is_admin:
+            return
+
+        try:
+            if not self.repository.set_active(signature_id, active):
+                raise ValueError("Підпис не знайдено.")
+            self.close_dialog()
+            self.load_signatures(self.search_field.value or "")
+            if self.database_available:
+                self.list_view.update()
+                self.show_message(
+                    "Підпис відновлено."
+                    if active
+                    else "Підпис приховано. Файл збережено."
+                )
+        except ValueError as ex:
+            self.show_error(str(ex))
+        except Exception as ex:
+            print(f"Помилка зміни статусу підпису: {ex}")
+            self.set_database_unavailable()
+            try:
+                self.list_view.update()
+            except Exception:
+                pass
+
+    # =========================================================
+    # PERMANENT DELETE (ADMIN ONLY)
+    # =========================================================
+
+    def confirm_permanent_delete(self, signature):
+        if not self.is_admin or not self.database_available:
             return
 
         dialog = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Видалення підпису"),
+            title=ft.Text("Остаточне видалення"),
             content=ft.Text(
-                f"Ви дійсно хочете видалити підпис\n" f"«{signature.name}»?"
+                f"Видалити підпис «{signature.name}» назавжди?\n\n"
+                "Буде видалено запис із бази та файл зображення. Відновити його буде неможливо."
             ),
             actions=[
-                ft.TextButton(
-                    "Скасувати",
-                    on_click=lambda e: (self.close_dialog()),
-                ),
+                ft.TextButton("Скасувати", on_click=lambda e: self.close_dialog()),
                 ft.Button(
-                    "Видалити",
-                    icon=ft.Icons.DELETE,
-                    on_click=lambda e: (self.delete_signature(signature.id)),
+                    "Видалити назавжди",
+                    icon=ft.Icons.DELETE_FOREVER,
+                    on_click=lambda e, sid=signature.id: self.delete_signature_permanently(
+                        sid
+                    ),
                 ),
             ],
-            actions_alignment=(ft.MainAxisAlignment.END),
+            actions_alignment=ft.MainAxisAlignment.END,
         )
-
         self.page.show_dialog(dialog)
 
-    # =========================================================
-    # DELETE
-    # =========================================================
-
-    def delete_signature(
-        self,
-        signature_id: int,
-    ):
-        if not self.can_manage:
+    def delete_signature_permanently(self, signature_id: int):
+        if not self.is_admin or not self.database_available:
             return
-        if not self.database_available:
-            return
-
         try:
-            result = self.repository.delete(signature_id)
-
+            result = self.repository.delete_permanently(signature_id)
             if not result:
                 raise ValueError("Підпис не знайдено.")
-
             self.close_dialog()
-
             self.load_signatures(self.search_field.value or "")
-
-            if not self.database_available:
-                return
-
-            self.list_view.update()
-
-            self.show_message("Підпис видалено.")
-
+            if self.database_available:
+                self.list_view.update()
+                self.show_message("Підпис і файл остаточно видалено.")
         except ValueError as ex:
             self.show_error(str(ex))
-
         except Exception as ex:
-            print(f"Помилка видалення підпису: {ex}")
-
+            print(f"Помилка остаточного видалення підпису: {ex}")
             self.set_database_unavailable()
+            try:
+                self.list_view.update()
+            except Exception:
+                pass
 
+    # Залишено для сумісності зі старими викликами: звичайне видалення лише приховує.
+    def delete_signature(self, signature_id: int):
+        if not self.can_manage or not self.database_available:
+            return
+        try:
+            if not self.repository.set_active(signature_id, False):
+                raise ValueError("Підпис не знайдено.")
+            self.close_dialog()
+            self.load_signatures(self.search_field.value or "")
+            if self.database_available:
+                self.list_view.update()
+                self.show_message("Підпис приховано. Файл збережено.")
+        except ValueError as ex:
+            self.show_error(str(ex))
+        except Exception as ex:
+            print(f"Помилка приховування підпису: {ex}")
+            self.set_database_unavailable()
             try:
                 self.list_view.update()
             except Exception:
