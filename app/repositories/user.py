@@ -41,7 +41,7 @@ class UserRepository:
                 user.is_active = active
                 session.commit()
 
-    def creaet_user(self, username: str, password_hash: str, role: str) -> int:
+    def create_user(self, username: str, password_hash: str, role: str) -> int:
         with get_session() as session:
             user = User(username=username, password_hash=password_hash, role=role)
             session.add(user)
